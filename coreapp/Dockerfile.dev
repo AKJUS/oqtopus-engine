@@ -1,0 +1,28 @@
+ARG GO_VERSION=1.24
+FROM golang:$GO_VERSION AS builder
+
+WORKDIR /app
+
+# install tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  curl \
+  git \
+  iproute2 \
+  procps \
+  tar \
+  vim && \
+  curl -L "https://github.com/fullstorydev/grpcurl/releases/download/v1.9.3/grpcurl_1.9.3_linux_x86_64.tar.gz" | tar -xz -C /usr/local/bin && \
+  chmod +x /usr/local/bin/grpcurl && \
+  apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# setup user
+RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
+USER appuser
+
+COPY . /app
+
+# build application
+RUN go build -o /go/bin/edge ./cmd/edge/main.go
+
+# run application
+CMD ["edge", "poller", "--qpu=qmt", "--log-level=debug", "--transpiler=grpc", "--disable-stdout-log", "--enable-file-log"]

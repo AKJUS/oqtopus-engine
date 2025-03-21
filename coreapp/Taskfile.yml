@@ -1,0 +1,82 @@
+version: '3'
+dotenv: ['.env']
+vars:
+  MAIN_PKG: "cmd/edge/main.go"
+  BIN_DIR: "./bin"
+  OAS_DIR: "./oas"
+  CORE_APP_BIN_NAME: "engine"
+tasks:
+  build:
+    desc: "Build engine"
+    cmds:
+      - go build -o {{.CORE_APP_BIN_NAME}} -ldflags "-X main.versionByBuildFlag={{.CLI_ARGS | default "no_version"}}" {{.MAIN_PKG}}
+  start:
+    desc: "Start engine"
+    vars:
+        LD: '{{.LOG_DIR | default "./shares/logs"}}'
+        SP: '{{.SETTING_PATH | default "./setting/setting.toml"}}'
+    cmds:
+      - >
+        bash -c 'nohup ./{{.CORE_APP_BIN_NAME}} poller --log-level=debug --qpu=qmt
+        --transpiler=tranqu --setting-path={{.SP}}
+        --db=service --enable-file-log --log-dir={{.LD}} --dev-mode
+        --device-setting-path=./setting/device_setting.toml >/dev/null 2>&1 & echo $! > ./engine.pid'
+  start-wo-hup:
+    desc: "Start engine without nohup"
+    vars:
+        LD: '{{.LOG_DIR | default "./shares/logs"}}'
+        SP: '{{.SETTING_PATH | default "./setting/setting.toml"}}'
+    cmds:
+      - >
+        bash -c './{{.CORE_APP_BIN_NAME}} poller --log-level=debug --qpu=qmt
+        --transpiler=tranqu --setting-path={{.SP}}
+        --db=service --enable-file-log --log-dir={{.LD}} --dev-mode
+        --device-setting-path=./setting/device_setting.toml'
+  run:
+    desc: "Run poller command"
+    vars:
+      LD: '{{.LOG_DIR | default "./shares/logs"}}'
+      SP: '{{.SETTING_PATH | default "./setting/setting.toml"}}'
+    cmds:
+      - >
+        go run {{.MAIN_PKG}} poller --log-level=debug --qpu=qmt --db=service --transpiler=tranqu --setting-path={{.SP}}
+        --enable-file-log --log-dir={{.LD}} --dev-mode --device-setting-path=./setting/device_setting.toml
+  build-start:
+    desc: "Build And engine in coop environment"
+    vars:
+      LD: '{{.LOG_DIR | default "./shares/logs"}}'
+      SP: '{{.SETTING_PATH | default "./setting/setting.toml"}}'
+    cmds:
+      - task: build
+      - task: start
+  stop:
+    desc: "Gracefully stop the running engine process (SIGINT)"
+    cmds:
+      - |
+        if [ -f ./engine.pid ]; then
+          PID=$(cat ./engine.pid)
+          echo "Sending SIGINT to engine process (PID: $PID)"
+          kill -2 $PID
+          rm ./engine.pid
+        else
+          echo "No engine.pid file found. Is engine running?"
+        fi
+  unit-test:
+    desc: "Run go test. You can use CLI_ARGS to pass additiohnal options to go test command"
+    cmds:
+      - go test -failfast ./... -tags=unit -timeout 10s {{.CLI_ARGS}}
+  unit-test-all:
+    desc: "Go and Python test"
+    cmds:
+      - python -m pytest ../circuit_combiner/tests/ --cov=cloudserver --cov-report term-missing
+      - python -m pytest ../estimation/tests/ --cov=cloudserver --cov-report term-missing
+      - python -m pytest ../mitigation/tests/ --cov=cloudserver --cov-report term-missing
+      - go test -v ./... -tags=unit -cover -timeout 10s
+  help:
+    desc: "Print help of poller command"
+    cmds:
+      - go run {{.MAIN_PKG}} poller --help
+includes:
+  oas:
+    taskfile: "{{.OAS_DIR}}/Taskfile.yml"
+    dir: "{{.OAS_DIR}}"

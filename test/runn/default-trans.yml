@@ -1,0 +1,52 @@
+desc: Normal Job with default transpiler
+runners:
+  req: https://${USER_API_ENDPOINT}
+vars:
+  token: ${Q_API_TOKEN}
+steps:
+  post:
+    desc: post normal job with default transpiler
+    req:
+      /v1/jobs:
+        post:
+          headers:
+            q-api-token: "{{ vars.token }}"
+          body:
+            application/json:
+              description: runn test/default transpiler job
+              device_id: Kawasaki
+              job_info:
+                program:
+                  - OPENQASM 3; include "stdgates.inc"; qubit[2] q; bit[2] c; x q[1]; c = measure q;
+              job_type: sampling
+              name: normal
+              shots: 1000
+              status: submitted
+              transpiler_info: {}
+    test: |
+      current.res.status == 200
+    dump:
+      expr: current.res.body.job_id + "(default transpiler job) is posted"
+  wait:
+    desc: check job status
+    loop:
+      count: 20
+      until: 'current.res.body.status  == "succeeded" || current.res.body.status  == "failed"'
+      minInterval: 5
+      maxInterval: 10
+    req:
+      /v1/jobs/{{steps.post.res.body.job_id}}:
+        get:
+          headers:
+            q-api-token: "{{ vars.token }}"
+    dump:
+      expr: steps.post.res.body.job_id + "(default transpiler job) is in " + current.res.body.status
+  check-status:
+    test: |
+      steps.wait.res.body.status == "succeeded"
+  check-transpiler-lib:
+    test: |
+      steps.wait.res.body.transpiler_info.transpiler_lib == "qiskit"
+  check-transpiler-options:
+    test: |
+      steps.wait.res.body.transpiler_info.transpiler_options.optimization_level == 2

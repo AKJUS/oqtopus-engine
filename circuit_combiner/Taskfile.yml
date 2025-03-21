@@ -1,0 +1,11 @@
+version: '3'
+tasks:
+  build-docker:
+    desc: "Build Circuit Combiner Docker Image"
+    vars:
+      REPO: '{{.CIRCUIT_COMBINER_REPO | default "circuit-combiner/python3.12.9"}}'
+      TAG: '{{.CIRCUIT_COMBINER_TAG | default "latest"}}'
+      IMAGE: '{{.CIRCUIRT_COMBINER_IMAGE | default (printf "%s:%s" .REPO .TAG)}}'
+    cmds:
+      - docker build . -t {{.IMAGE}}
+      - docker image inspect {{.IMAGE}} | grep Size

@@ -1,0 +1,17 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: sse
+plugins:
+  # python
+  - remote: buf.build/grpc/python:v1.62.2
+    out: ../sse_runtime/src/sse_runtime/sse_sampler
+  - remote: buf.build/protocolbuffers/python:v25.1
+    out: ../sse_runtime/src/sse_runtime/sse_sampler
+  # go
+  - remote: buf.build/grpc/go:v1.2.0
+    out: ../coreapp
+  - remote: buf.build/protocolbuffers/go:v1.28.1
+    out: ../coreapp

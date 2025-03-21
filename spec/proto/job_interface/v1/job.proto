@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package job_interface.v1;
+
+service JobService {
+  rpc GetJobs(GetJobsRequest) returns (GetJobsResponse) {}
+  rpc UpdateJobInfo(UpdateJobInfoRequest) returns (UpdateJobInfoResponse) {}
+  rpc UpdateDeviceStatus(UpdateDeviceStatusRequest) returns (UpdateDeviceStatusResponse) {}
+  rpc UpdateDeviceInfo(UpdateDeviceInfoRequest) returns (UpdateDeviceInfoResponse) {}
+}
+
+// rpc GetJobs
+message GetJobsRequest {
+  string device_id = 1;
+  string status = 2;
+  uint32 max_results = 3;
+}
+
+message GetJobsResponse {
+  uint32 return_code = 1;
+  string message = 2;
+  repeated Job job = 3;
+}
+
+message Job {
+  string job_id = 1;
+  string name = 2;
+  string description = 3;
+  string status = 4;
+  string job_type = 5;
+  string device_id = 6;
+  uint32 shots = 7;
+  JobInfo job_info = 8;
+  string transpiler_info = 9;
+  string simulator_info = 10;
+  string mitigation_info = 11;
+  // TODO OpenAPI定義にないが、submitted_at, ready_at, running_at, ended_at, execution_timeも必要では
+}
+
+message JobInfo {
+  string program = 1;
+  string combined_program = 2;
+  string operator = 3;
+  string transpiled_program = 4;
+  string result = 5;
+  string message = 6;
+}
+
+// rpc UpdateJob
+message UpdateJobInfoRequest {
+  string job_id = 1;
+  UpdateJobInfo update_job_info = 2;
+  // TODO OpenAPI定義にないが、status, submitted_at, ready_at, running_at, ended_at, execution_timeも必要では
+}
+
+message UpdateJobInfoResponse {
+  uint32 return_code = 1;
+  string message = 2;
+}
+
+message UpdateJobInfo {
+  string combined_program = 1;
+  string transpiled_program = 2;
+  string result = 3;
+  string message = 4;
+}
+
+// rpc UpdateDeviceStatus
+message UpdateDeviceStatusRequest {
+  string device_id = 1;
+  string status = 2;
+  string available_at = 3;
+}
+
+message UpdateDeviceStatusResponse {
+  uint32 return_code = 1;
+  string message = 2;
+}
+
+// rpc UpdateDeviceInfo
+message UpdateDeviceInfoRequest {
+  string device_id = 1;
+  string device_info = 2;
+  string calibrated_at = 3;
+}
+
+message UpdateDeviceInfoResponse {
+  uint32 return_code = 1;
+  string message = 2;
+}

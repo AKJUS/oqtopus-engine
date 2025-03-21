@@ -1,0 +1,33 @@
+version: '3'
+vars:
+  COMMIT: v0.1.1
+tasks:
+  gen:
+    desc: "Generate API"
+    cmds:
+      - buf generate tranqu-proto --template buf.gen.tranqu.yaml
+      - cp -r gen/tranqu/v1 ../gen/tranqu
+
+  update:
+    desc: "Update Tranqu files"
+    cmds:
+      - task: clean
+      - task: clone
+      - task: checkout
+      - task: clean
+  clean:
+    desc: "Clean tranqu-server"
+    cmds:
+      - rm -rf tranqu-server
+  clone:
+    desc: "Clone Tranqu-Server"
+    cmds:
+      - git clone --no-checkout https://github.com/oqtopus-team/tranqu-server.git
+  checkout:
+    desc: "Checkout Tranqu protocol-buffer"
+    dir: tranqu-server
+    cmds:
+      - git sparse-checkout init --cone
+      - git sparse-checkout set spec/proto/tranqu_server/proto/v1
+      - git checkout {{.COMMIT}}
+      - cp -r spec/proto/tranqu_server/proto/v1 ../tranqu-proto

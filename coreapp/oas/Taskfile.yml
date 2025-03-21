@@ -1,0 +1,36 @@
+version: '3'
+vars:
+  COMMIT: "develop"
+tasks:
+  update:
+    desc: "Update cloud oas files"
+    cmds:
+      - task: clean
+      - task: clone
+      - task: checkout
+      - task: clean
+  clean:
+    desc: "Clean oqtopus-cloud"
+    cmds:
+      - rm -rf oqtopus-cloud
+  clone:
+    desc: "Clone cloud oas files"
+    cmds:
+      - git clone --no-checkout https://github.com/oqtopus-team/oqtopus-cloud 
+  checkout:
+    desc: "Checkout cloud oas files"
+    dir: oqtopus-cloud
+    cmds:
+      - git sparse-checkout init --cone
+      - git sparse-checkout set backend/oas/provider
+      - git checkout {{.COMMIT}}
+      - rm -rf ../provider
+      - cp -r backend/oas/provider ../
+  gen:
+    desc: "Generate cloudmockapi and providerapi"
+    cmds:
+      - rm -rf gen/cloudmockapi/*
+      - ogen -package cloudmockapi -config config.yml -target gen/cloudmockapi ./cloudmock_api.yml
+      - rm -rf gen/providerapi/*
+      - ogen -package providerapi -config config.yml -target gen/providerapi ./provider/openapi.yaml
+      - mockgen -source gen/providerapi/oas_client_gen.go -destination gen/mock_providerapi/oas_client_gen_mock.go

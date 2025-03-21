@@ -1,0 +1,32 @@
+error.BadRequest:
+  type: object
+  properties:
+    message:
+      type: string
+      nullable: false
+  required:
+    - message
+error.InternalServerError:
+  type: object
+  properties:
+    message:
+      type: string
+      nullable: false
+  required:
+    - message
+error.NotFoundError:
+  type: object
+  properties:
+    message:
+      type: string
+      nullable: false
+  required:
+    - message
+error.ConflictError:
+  type: object
+  properties:
+    message:
+      type: string
+      nullable: false
+  required:
+    - message

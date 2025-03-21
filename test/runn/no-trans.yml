@@ -1,0 +1,50 @@
+desc: Normal Job without transpiler
+runners:
+  req: https://${USER_API_ENDPOINT}
+vars:
+  token: ${Q_API_TOKEN}
+steps:
+  post:
+    desc: post normal job without transpiler
+    req:
+      /v1/jobs:
+        post:
+          headers:
+            q-api-token: "{{ vars.token }}"
+          body:
+            application/json:
+              description: runn test/no transpiler job
+              device_id: Kawasaki
+              job_info:
+                program:
+                  - OPENQASM 3; include "stdgates.inc"; qubit[2] q; bit[2] c; x q[1]; c = measure q;
+              job_type: sampling
+              name: normal
+              shots: 1000
+              status: submitted
+              transpiler_info:
+                transpiler_lib: null
+    test: |
+      current.res.status == 200
+    dump:
+      expr: current.res.body.job_id + "(no-transpiler job) is posted"
+  wait:
+    desc: check job status
+    loop:
+      count: 20
+      until: 'current.res.body.status  == "succeeded" || current.res.body.status  == "failed"'
+      minInterval: 5
+      maxInterval: 10
+    req:
+      /v1/jobs/{{steps.post.res.body.job_id}}:
+        get:
+          headers:
+            q-api-token: "{{ vars.token }}"
+    dump:
+      expr: steps.post.res.body.job_id + "(no transpiler job) is in " + current.res.body.status
+  check-result:
+    test: |
+      steps.wait.res.body.status == "succeeded"
+  check-no-transpiler:
+    test: |
+      steps.wait.res.body.job_info.transpile_result.transpiled_program == ""

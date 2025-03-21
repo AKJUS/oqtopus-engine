@@ -1,0 +1,14 @@
+device_name = "wako"
+qubits_number = 6
+[qasm_support.allow_list]
+enabled = true
+[[qasm_support.allow_list.statements]]
+name = "if"
+[[qasm_support.allow_list.statements]]
+name = "gate_call"
+[qasm_support.deny_list]
+enabled = false
+[[qasm_support.deny_list.statements]]
+name = "def"
+[[qasm_support.deny_list.statements]]
+name = "gate_declaration"

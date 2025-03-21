@@ -1,0 +1,18 @@
+syntax = "proto3";
+package sse_interface.v1;
+
+service SSEService {
+  rpc TranspileAndExec(TranspileAndExecRequest) returns (TranspileAndExecResponse);
+}
+
+message TranspileAndExecRequest {
+  string job_data_json = 1;
+}
+
+message TranspileAndExecResponse {
+  string status = 1;
+  string message = 2;
+  string transpiler_info = 3;
+  string transpiled_qasm = 4;
+  string result = 5;
+}
