@@ -3,7 +3,7 @@ runners:
   req: https://${USER_API_ENDPOINT}
 vars:
   token: ${Q_API_TOKEN}
-
+  device_id: ${DEVICE_ID}
 steps:
   post:
     desc: post estimation job without transpiler
@@ -15,7 +15,7 @@ steps:
           body:
             application/json:
               description: runn test/estimation job without transpiler
-              device_id: Kawasaki
+              device_id: "{{ vars.device_id }}"
               job_info:
                 program:
                 - OPENQASM 3; include "stdgates.inc"; qubit[2] q; bit[2] c; x q[1]; c = measure q;
