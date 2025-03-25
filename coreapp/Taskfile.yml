@@ -51,6 +51,7 @@ tasks:
       - task: start
   stop:
     desc: "Gracefully stop the running engine process (SIGINT)"
+    silent: true
     cmds:
       - |
         if [ -f ./engine.pid ]; then
@@ -58,6 +59,17 @@ tasks:
           echo "Sending SIGINT to engine process (PID: $PID)"
           kill -2 $PID
           rm ./engine.pid
+        else
+          echo "No engine.pid file found. Is engine running?"
+        fi
+  check:
+    desc: "Check the engine process status"
+    silent: true
+    cmds:
+      - |
+        if [ -f ./engine.pid ]; then
+          PID=$(cat ./engine.pid)
+          echo "Engine process is running (PID: $PID)"
         else
           echo "No engine.pid file found. Is engine running?"
         fi
