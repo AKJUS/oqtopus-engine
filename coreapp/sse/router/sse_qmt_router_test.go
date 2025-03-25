@@ -5,11 +5,11 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"testing"
 
 	"github.com/oqtopus-team/oqtopus-engine/coreapp/core"
-	"github.com/oqtopus-team/oqtopus-engine/coreapp/oas"
 	ssep "github.com/oqtopus-team/oqtopus-engine/coreapp/sse"
 	sse "github.com/oqtopus-team/oqtopus-engine/coreapp/sse/sse_interface/v1"
 	"github.com/stretchr/testify/assert"
@@ -40,7 +40,7 @@ func TestGRPCRouter_ReqTranspile(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				userReq: &sse.TranspileAndExecRequest{
-					JobDataJson: `{"id":"A1234","qasm":"test_qasm","shots":1000,"transpiler_info": {"transpiler_lib": "qiskit", "transpiler_options": {"optimization_level": 2}}}`,
+					JobDataJson: `{"id":"A1234","qasm":"test_qasm","shots":1000,"transpiler_info": {"transpiler_lib": "qiskit", "transpiler_options": {"optimization_level":2}}}`,
 				},
 			},
 			wantRes: &sse.TranspileAndExecResponse{
@@ -203,7 +203,7 @@ func TestGRPCRouter_ReqTranspile(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				userReq: &sse.TranspileAndExecRequest{
-					JobDataJson: `{"id":"A1234","qasm":"test_qasm","shots":1000,"transpiler_info": {"transpiler_lib": "qiskit", "transpiler_options": {"optimization_level": 2}}}`,
+					JobDataJson: `{"id":"A1234","qasm":"test_qasm","shots":1000,"transpiler_info": {"transpiler_lib": "qiskit", "transpiler_options": {"optimization_level":2}}}`,
 				},
 			},
 			wantRes: &sse.TranspileAndExecResponse{
@@ -305,7 +305,7 @@ func Test_validateShots(t *testing.T) {
 			},
 		},
 		{
-			name: "mminus shots",
+			name: "minus shots",
 			args: args{
 				shots: -1,
 				deviceInfo: &core.DeviceInfo{
@@ -422,6 +422,9 @@ func Test_toJob(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, jm)
 
+	notDefaultTranspilerConfig := core.DEFAULT_TRANSPILER_CONFIG()
+	notDefaultTranspilerConfig.UseDefault = false
+
 	type args struct {
 		body []byte
 	}
@@ -434,13 +437,13 @@ func Test_toJob(t *testing.T) {
 		{
 			name: "Success",
 			args: args{
-				body: []byte(`{"id":"A1234","qasm":"test_qasm","shots":1000,"transpiler_info": {"transpiler_lib": "qiskit", "transpiler_options": {"optimization_level": 2}}}`),
+				body: []byte(`{"id":"A1234","qasm":"test_qasm","shots":1000,"transpiler_info": {"transpiler_lib": "qiskit", "transpiler_options": {"optimization_level":2}}}`),
 			},
 			want: &core.JobData{
 				ID:         "A1234",
 				QASM:       "test_qasm",
 				Shots:      1000,
-				Transpiler: oas.DEFAULT_TRANSPILER_CONFIG(), //"{\"transpiler_lib\": \"qiskit\", \"transpiler_options\": {\"optimization_level\": 2}}",
+				Transpiler: notDefaultTranspilerConfig, //"{\"transpiler_lib\": \"qiskit\", \"transpiler_options\": {\"optimization_level\":2}}",
 			},
 			wantErr: false,
 		},
@@ -453,7 +456,7 @@ func Test_toJob(t *testing.T) {
 				ID:         "A1234",
 				QASM:       "test_qasm",
 				Shots:      1000,
-				Transpiler: oas.DEFAULT_TRANSPILER_CONFIG(), //"{\"transpiler_lib\": \"qiskit\", \"transpiler_options\": {\"optimization_level\": 2}}",
+				Transpiler: core.DEFAULT_TRANSPILER_CONFIG(), //"{\"transpiler_lib\": \"qiskit\", \"transpiler_options\": {\"optimization_level\":2}}",
 			},
 			wantErr: true,
 		},
@@ -466,7 +469,7 @@ func Test_toJob(t *testing.T) {
 				ID:         "A1234",
 				QASM:       "test_qasm",
 				Shots:      1000,
-				Transpiler: oas.DEFAULT_TRANSPILER_CONFIG(), //"{\"transpiler_lib\": \"qiskit\", \"transpiler_options\": {\"optimization_level\": 2}}",
+				Transpiler: core.DEFAULT_TRANSPILER_CONFIG(), //"{\"transpiler_lib\": \"qiskit\", \"transpiler_options\": {\"optimization_level\":2}}",
 			},
 			wantErr: true,
 		},
@@ -479,7 +482,7 @@ func Test_toJob(t *testing.T) {
 				ID:         "A1234",
 				QASM:       "test_qasm",
 				Shots:      1000,
-				Transpiler: oas.DEFAULT_TRANSPILER_CONFIG(), //"{\"transpiler_lib\": \"qiskit\", \"transpiler_options\": {\"optimization_level\": 2}}",
+				Transpiler: core.DEFAULT_TRANSPILER_CONFIG(), //"{\"transpiler_lib\": \"qiskit\", \"transpiler_options\": {\"optimization_level\":2}}",
 			},
 			wantErr: true,
 		},
@@ -498,7 +501,9 @@ func Test_toJob(t *testing.T) {
 			assert.Equal(t, jd.ID, tt.want.ID)
 			assert.Equal(t, jd.QASM, tt.want.QASM)
 			assert.Equal(t, jd.Shots, tt.want.Shots)
-			assert.Equal(t, jd.Transpiler, tt.want.Transpiler)
+			assert.Equal(t, jd.Transpiler, tt.want.Transpiler,
+				fmt.Sprintf("Expected Transpiler Options: %v, Actual Transpiler Options: %v",
+					string(tt.want.Transpiler.TranspilerOptions), string(jd.Transpiler.TranspilerOptions)))
 		})
 	}
 }

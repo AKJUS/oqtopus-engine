@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -18,8 +19,8 @@ type VirtualPhysicalMapping map[uint32]uint32
 type Counts map[string]uint32
 
 func (c Counts) String() string {
-	// json string
-	st, err := json.Marshal(c)
+	// jsonIter string
+	st, err := jsonIter.Marshal(c)
 	if err != nil {
 		zap.L().Error("Failed to marshal core.Counts")
 		return ""
@@ -27,9 +28,28 @@ func (c Counts) String() string {
 	return string(st)
 }
 
+func ToStatus(s string) (Status, error) {
+	switch s {
+	case "submitted":
+		return SUBMITTED, nil
+	case "ready":
+		return READY, nil
+	case "running":
+		return RUNNING, nil
+	case "succeeded":
+		return SUCCEEDED, nil
+	case "failed":
+		return FAILED, nil
+	case "cancelled":
+		return CANCELLED, nil
+	default:
+		return 0, fmt.Errorf("unknown status: %s", s)
+	}
+}
+
 func (p PhysicalVirtualMapping) String() string {
-	// json string
-	st, err := json.Marshal(p)
+	// jsonIter string
+	st, err := jsonIter.Marshal(p)
 	if err != nil {
 		zap.L().Error("Failed to marshal core.PhysicalVirtualMapping")
 		return ""
@@ -38,8 +58,8 @@ func (p PhysicalVirtualMapping) String() string {
 }
 
 func (v VirtualPhysicalMapping) String() string {
-	// json string
-	st, err := json.Marshal(v)
+	// jsonIter string
+	st, err := jsonIter.Marshal(v)
 	if err != nil {
 		zap.L().Error("Failed to marshal core.VirtualPhysicalMapping")
 		return ""
@@ -49,7 +69,7 @@ func (v VirtualPhysicalMapping) String() string {
 
 type DividedResult map[uint32]map[string]uint32 // key1: circuit index, key2: bit string, value: count
 
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var jsonIter = jsoniter.ConfigCompatibleWithStandardLibrary
 
 const (
 	SUBMITTED Status = iota // In the queue in the cloud server.
@@ -76,25 +96,6 @@ func (s Status) String() string {
 		return "cancelled"
 	default:
 		return "unknown"
-	}
-}
-
-func ToStatus(s string) (Status, error) {
-	switch s {
-	case "submitted":
-		return SUBMITTED, nil
-	case "ready":
-		return READY, nil
-	case "running":
-		return RUNNING, nil
-	case "succeeded":
-		return SUCCEEDED, nil
-	case "failed":
-		return FAILED, nil
-	case "cancelled":
-		return CANCELLED, nil
-	default:
-		return 0, fmt.Errorf("unknown status: %s", s)
 	}
 }
 
@@ -227,8 +228,8 @@ func CloneJobData(i *JobData) *JobData {
 }
 
 func (r *Result) ToString() string {
-	// Marshal to json with key sorted
-	st, err := json.Marshal(r)
+	// Marshal to jsonIter with key sorted
+	st, err := jsonIter.Marshal(r)
 	if err != nil {
 		zap.L().Error("Failed to marshal core.Result")
 		return ""
@@ -237,13 +238,11 @@ func (r *Result) ToString() string {
 	return string(st)
 }
 
+// TODO resolve the confusion between TranspilerConfig and TranspilerInfo
 type TranspilerConfig struct {
-	TranspilerLib     *string           `json:"transpiler_lib"` //(=nil) null means no transpiler
-	TranspilerOptions TranspilerOptions `json:"transpiler_options"`
-}
-
-type TranspilerOptions struct {
-	OptimizationLevel int `json:"optimization_level"`
+	TranspilerLib     *string         `json:"transpiler_lib"`     //(=nil) null means no transpiler
+	TranspilerOptions json.RawMessage `json:"transpiler_options"` // raw jsonIter
+	UseDefault        bool            `json:"-"`
 }
 
 func (c TranspilerConfig) NeedTranspiling() bool {
@@ -252,7 +251,7 @@ func (c TranspilerConfig) NeedTranspiling() bool {
 
 func UnmarshalToTranspilerConfig(transpilerInfo string) TranspilerConfig {
 	var c TranspilerConfig
-	err := json.Unmarshal([]byte(transpilerInfo), &c)
+	err := jsonIter.Unmarshal([]byte(transpilerInfo), &c)
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("failed to unmarshal transpiler config from :%s/reason:%s",
 			transpilerInfo, err))

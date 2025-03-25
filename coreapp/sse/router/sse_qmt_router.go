@@ -7,7 +7,6 @@ import (
 	"net"
 
 	"github.com/oqtopus-team/oqtopus-engine/coreapp/core"
-	"github.com/oqtopus-team/oqtopus-engine/coreapp/oas"
 	ssep "github.com/oqtopus-team/oqtopus-engine/coreapp/sse"
 	sseconf "github.com/oqtopus-team/oqtopus-engine/coreapp/sse/conf"
 	sse "github.com/oqtopus-team/oqtopus-engine/coreapp/sse/sse_interface/v1"
@@ -84,7 +83,7 @@ func (m *GRPCRouter) TranspileAndExec(ctx context.Context, userReq *sse.Transpil
 
 	// TRANSPILE SECTION START
 	if jd.Transpiler == nil || useDefaultTranspiler(JobDataJson) {
-		jd.Transpiler = oas.DEFAULT_TRANSPILER_CONFIG()
+		jd.Transpiler = core.DEFAULT_TRANSPILER_CONFIG()
 	}
 	// Set the transpiler info to response
 	transpilerJson, err := json.Marshal(jd.Transpiler)

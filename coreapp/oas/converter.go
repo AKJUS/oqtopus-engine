@@ -19,16 +19,6 @@ import (
 
 const notSetMessage = "not set in cloud job"
 
-func DEFAULT_TRANSPILER_CONFIG() *core.TranspilerConfig {
-	str := "qiskit"
-	return &core.TranspilerConfig{
-		TranspilerLib: &str,
-		TranspilerOptions: core.TranspilerOptions{
-			OptimizationLevel: 2,
-		},
-	}
-}
-
 func ConvertToCloudJob(j *core.JobData) *api.JobsJobDef {
 	// TODO: too long function
 	st := convertToAPIStatus(j.Status)
@@ -143,7 +133,7 @@ func ConvertFromCloudJob(j *api.JobsJobDef) *core.JobData {
 	if useTranspiler(j.TranspilerInfo) {
 		if useDefaultTranspiler(j.TranspilerInfo) {
 			zap.L().Debug("use default transpiler config")
-			jd.Transpiler = DEFAULT_TRANSPILER_CONFIG()
+			jd.Transpiler = core.DEFAULT_TRANSPILER_CONFIG()
 		} else {
 			zap.L().Debug("use specified transpiler config")
 			jd.Transpiler = convertToTranspilerInfoFromONTI(j.TranspilerInfo)

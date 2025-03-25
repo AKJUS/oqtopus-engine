@@ -4,6 +4,7 @@
 package core
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/MakeNowJust/heredoc/v2"
@@ -178,20 +179,20 @@ func TestCloneJobData(t *testing.T) {
 
 func TestUnmarshalToTranspilerConfig(t *testing.T) {
 	ti := `
-{ "transpiler_lib": "qiskit", "transpiler_options": {"optimization_level": 2}}
+{ "transpiler_lib": "qiskit", "transpiler_options": {"optimization_level":2}}
 `
 	c := UnmarshalToTranspilerConfig(ti)
 	assert.Equal(t, "qiskit", *c.TranspilerLib)
-	assert.Equal(t, c.TranspilerOptions, TranspilerOptions{OptimizationLevel: 2})
+	assert.Equal(t, json.RawMessage(`{"optimization_level":2}`), c.TranspilerOptions)
 }
 
 func TestMarshalTranspilerConfig(t *testing.T) {
 	qiskitStr := "qiskit"
-	c := TranspilerConfig{TranspilerLib: &qiskitStr, TranspilerOptions: TranspilerOptions{OptimizationLevel: 2}}
-	b, err := json.Marshal(c)
+	c := TranspilerConfig{TranspilerLib: &qiskitStr, TranspilerOptions: json.RawMessage(`{"optimization_level":2}`)}
+	b, err := jsonIter.Marshal(c)
 	assert.Nil(t, err)
 	assert.Equal(t, string(b), `{"transpiler_lib":"qiskit","transpiler_options":{"optimization_level":2}}`)
-	bo, err := json.Marshal(c.TranspilerOptions)
+	bo, err := jsonIter.Marshal(c.TranspilerOptions)
 	assert.Nil(t, err)
 	assert.Equal(t, string(bo), `{"optimization_level":2}`)
 }

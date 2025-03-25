@@ -17,11 +17,6 @@ var innerJobIDSet map[string]struct{}
 // enum requestType
 type requestType int
 
-const (
-	STATUS_UPDATE requestType = iota
-	JOB_INFO_UPDATE
-)
-
 type ServiceDB struct {
 	endpoint string
 	apiKey   string
@@ -149,7 +144,7 @@ func (s *ServiceDB) Update(j core.Job) error {
 			})
 	} else {
 		tr = api.NewOptNilJobsTranspileResult(api.JobsTranspileResult{})
-		//tr.SetToNull() // oqtopus cloud does not accept null transpile result :(
+		tr.SetToNull()
 	}
 	req := api.NewOptJobsUpdateJobInfoRequest(
 		api.JobsUpdateJobInfoRequest{
