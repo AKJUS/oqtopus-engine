@@ -293,14 +293,6 @@ func estimationPreProcess(j *EstimationJob) (preprocessedQASMs []string, grouped
 	// create gRPC client
 	client := pb.NewEstimationJobServiceClient(conn)
 
-	// Convert VirtualPhysicalMapping to sorted mapping list
-	keys := []uint32{}
-	for k := range j.JobData().Result.TranspilerInfo.VirtualPhysicalMapping {
-		keys = append(keys, uint32(k))
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i] < keys[j]
-	})
 	mappingList := []uint32{}
 	mapping := map[uint32]uint32{}
 	if j.JobData().NeedTranspiling() {
@@ -310,6 +302,15 @@ func estimationPreProcess(j *EstimationJob) (preprocessedQASMs []string, grouped
 			return nil, "", err
 		}
 	}
+
+	// Convert VirtualPhysicalMapping to sorted mapping list
+	keys := []uint32{}
+	for k := range mapping {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
 
 	for _, key := range keys {
 		mappingList = append(mappingList, mapping[key])
