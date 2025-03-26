@@ -15,6 +15,7 @@ Set the environment variables in the `.env` file.
 ```env
 USER_API_ENDPOINT=oqtopus-cloud.com/v1
 Q_API_TOKEN=your_secret_token
+DEVICE_ID=your_device_id
 ```
 
 ## Run all tests
