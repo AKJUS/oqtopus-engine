@@ -1515,7 +1515,7 @@ func Test_setResultToOutputJob(t *testing.T) {
 			want: &core.Result{
 				Counts: core.Counts{"00": 500, "11": 500},
 				TranspilerInfo: &core.TranspilerInfo{
-					Stats:                  "STATS",
+					Stats:                  json.RawMessage("STATS"),
 					VirtualPhysicalMapping: core.VirtualPhysicalMapping{0: 1, 1: 2, 2: 3},
 				},
 				Message: "Test Msg",

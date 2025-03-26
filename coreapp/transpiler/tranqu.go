@@ -140,7 +140,7 @@ func (t *Tranqu) Transpile(j core.Job) error {
 	zap.L().Debug(fmt.Sprintf("physical virtual mapping:%v", pvm))
 	j.JobData().Result.TranspilerInfo.PhysicalVirtualMapping = pvm
 	zap.L().Debug(fmt.Sprintf("transpiled stats:%v", res.GetStats()))
-	j.JobData().Result.TranspilerInfo.Stats = res.GetStats()
+	j.JobData().Result.TranspilerInfo.Stats = core.Stats(res.GetStats())
 	zap.L().Debug(fmt.Sprintf("transpiled program:%s", j.JobData().TranspiledQASM))
 	return nil
 }
@@ -163,16 +163,13 @@ func toVirtualPhysicalMappingFromString(virtualPhysicalMapping string) (core.Vir
 		return core.VirtualPhysicalMapping{}, err
 	}
 	zap.L().Debug(fmt.Sprintf("unmarshaled virtualPhysicalMapping:%v", m))
-	vpm := core.VirtualPhysicalMapping{}
-	for k, v := range m.QubitMapping {
-		num, err := strconv.ParseUint(k, 10, 32)
-		if err != nil {
-			zap.L().Error(fmt.Sprintf("failed to convert qubit index:%s/reason:%s",
-				k, err))
-			return core.VirtualPhysicalMapping{}, err
-		}
-		vpm[uint32(num)] = uint32(v)
+	d, err := json.Marshal(m.QubitMapping)
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("failed to marshal qubit mapping:%v/reason:%s",
+			m.QubitMapping, err))
+		return core.VirtualPhysicalMapping{}, err
 	}
+	vpm := core.VirtualPhysicalMapping(d)
 	zap.L().Debug(fmt.Sprintf("converted virtual physical mapping:%v", vpm))
 	return vpm, nil
 }

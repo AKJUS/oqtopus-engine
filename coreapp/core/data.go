@@ -13,9 +13,9 @@ import (
 )
 
 type Status int // Status of the job known to the cloud that is not as the same meaning in edge.
-
+type Stats json.RawMessage
 type PhysicalVirtualMapping map[uint32]uint32
-type VirtualPhysicalMapping map[uint32]uint32
+type VirtualPhysicalMapping json.RawMessage
 type Counts map[string]uint32
 
 func (c Counts) String() string {
@@ -109,7 +109,7 @@ type Result struct {
 }
 
 type TranspilerInfo struct {
-	Stats                  string                 `json:"stats"`
+	Stats                  Stats                  `json:"stats"`
 	PhysicalVirtualMapping PhysicalVirtualMapping `json:"physical_virtual_mapping"` // TODO: remove
 	VirtualPhysicalMapping VirtualPhysicalMapping `json:"virtual_physical_mapping"`
 }
@@ -135,7 +135,6 @@ func cloneCounts(counts Counts) Counts {
 func cloneTranspilerInfo(info *TranspilerInfo) *TranspilerInfo {
 	clone := &TranspilerInfo{}
 	clone.PhysicalVirtualMapping = make(PhysicalVirtualMapping)
-	clone.VirtualPhysicalMapping = make(VirtualPhysicalMapping)
 	for k, v := range info.PhysicalVirtualMapping {
 		clone.PhysicalVirtualMapping[k] = v
 	}
@@ -185,7 +184,6 @@ func (jd *JobData) NeedTranspiling() bool {
 func NewResult() *Result {
 	ti := &TranspilerInfo{}
 	ti.PhysicalVirtualMapping = make(PhysicalVirtualMapping)
-	ti.VirtualPhysicalMapping = make(VirtualPhysicalMapping)
 	return &Result{
 		Counts: make(Counts),
 		// TODO: fix this

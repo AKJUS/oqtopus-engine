@@ -26,9 +26,9 @@ func TestResultToString(t *testing.T) {
 			    "counts": {},
 			    "divided_result": null,
 			    "transpiler_info": {
-			      "stats": "",
+			      "stats": null,
 			      "physical_virtual_mapping": {},
-			      "virtual_physical_mapping": {}
+			      "virtual_physical_mapping": null
 			    },
 			    "estimation": null,
 			    "message": "",
@@ -44,9 +44,9 @@ func TestResultToString(t *testing.T) {
 			    "counts": {},
 			    "divided_result": null,
 			    "transpiler_info": {
-			      "stats": "",
+			      "stats": null,
 			      "physical_virtual_mapping": {},
-			      "virtual_physical_mapping": {}
+			      "virtual_physical_mapping": null
 			    },
 			    "estimation": null,
 			    "message": "dummy message",
@@ -65,9 +65,9 @@ func TestResultToString(t *testing.T) {
 			    },
 			    "divided_result": null,
 			    "transpiler_info": {
-			      "stats": "",
+			      "stats": null,
 			      "physical_virtual_mapping": {},
-			      "virtual_physical_mapping": {}
+			      "virtual_physical_mapping": null
 			    },
 			    "estimation": null,
 			    "message": "",
@@ -86,12 +86,12 @@ func TestResultToString(t *testing.T) {
 			    },
 			    "divided_result": null,
 			    "transpiler_info": {
-			      "stats": "",
+			      "stats": null,
 			      "physical_virtual_mapping": {
 			        "1": 2,
 			        "3": 6
 			      },
-			      "virtual_physical_mapping": {}
+			      "virtual_physical_mapping": null
 			    },
 			    "estimation": null,
 			    "message": "dummy message",

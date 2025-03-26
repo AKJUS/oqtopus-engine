@@ -120,15 +120,28 @@ func (s *ServiceDB) Update(j core.Job) error {
 
 	var (
 		nullString api.NilString
-		stats      api.NilString
+		stats      api.NilJobsTranspileResultStats
+		vpm        api.NilJobsTranspileResultVirtualPhysicalMapping
 	)
 	nullString = api.NewNilString("")
 	nullString.SetToNull()
-	stats = api.NewNilString("")
 	jobInfo := cJob.GetJobInfo()
 	if transpileResult, ok := jobInfo.GetTranspileResult().Get(); ok {
-		stats = transpileResult.Stats
+		if s, ok := transpileResult.Stats.Get(); ok {
+			stats = api.NewNilJobsTranspileResultStats(s)
+		} else {
+			stats.SetToNull()
+		}
+		if v, ok := transpileResult.VirtualPhysicalMapping.Get(); ok {
+			vpm = api.NewNilJobsTranspileResultVirtualPhysicalMapping(v)
+		} else {
+			vpm.SetToNull()
+		}
+	} else {
+		stats.SetToNull()
+		vpm.SetToNull()
 	}
+
 	if rext, ok := cJob.ExecutionTime.Get(); ok {
 		zap.L().Debug(fmt.Sprintf("ExecutionTime:%f", rext))
 	} else {
@@ -140,7 +153,7 @@ func (s *ServiceDB) Update(j core.Job) error {
 			api.JobsTranspileResult{
 				TranspiledProgram:      api.NewNilString(j.JobData().TranspiledQASM),
 				Stats:                  stats,
-				VirtualPhysicalMapping: api.NewNilString(j.JobData().Result.TranspilerInfo.VirtualPhysicalMapping.String()),
+				VirtualPhysicalMapping: vpm,
 			})
 	} else {
 		tr = api.NewOptNilJobsTranspileResult(api.JobsTranspileResult{})

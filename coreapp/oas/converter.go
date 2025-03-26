@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/go-faster/jx"
 	"strconv"
 
 	"github.com/go-openapi/strfmt"
@@ -83,12 +84,41 @@ func ConvertToCloudJob(j *core.JobData) *api.JobsJobDef {
 		jobType = api.JobsJobTypeSampling
 		jjr = api.JobsJobResult{}
 	}
+
+	// TODO functionize this part
+	tmpStatsMap := make(map[string]json.RawMessage)
+	statsMap := make(map[string]jx.Raw)
+	if j.Result.TranspilerInfo != nil &&
+		j.Result.TranspilerInfo.Stats != nil &&
+		len(j.Result.TranspilerInfo.Stats) != 0 {
+		if err := json.Unmarshal(j.Result.TranspilerInfo.Stats, &tmpStatsMap); err != nil {
+			zap.L().Error(fmt.Sprintf("failed to unmarshal stats string:%s/reason:%s",
+				j.Result.TranspilerInfo.Stats, err))
+		} else {
+			for k, v := range tmpStatsMap {
+				statsMap[k] = jx.Raw(v)
+			}
+		}
+	}
+	tmpVpMap := make(map[string]json.RawMessage)
+	vpMap := make(map[string]jx.Raw)
+	if j.Result.TranspilerInfo != nil &&
+		j.Result.TranspilerInfo.VirtualPhysicalMapping != nil &&
+		len(j.Result.TranspilerInfo.VirtualPhysicalMapping) != 0 {
+		if err := json.Unmarshal(j.Result.TranspilerInfo.VirtualPhysicalMapping, &tmpVpMap); err != nil {
+			zap.L().Error(fmt.Sprintf("failed to unmarshal virtual physical mapping/reason:%s", err))
+		} else {
+			for k, v := range tmpVpMap {
+				vpMap[k] = jx.Raw(v)
+			}
+		}
+	}
 	var ontr api.OptNilJobsTranspileResult
 	if j.Result.TranspilerInfo != nil {
 		tr := api.JobsTranspileResult{
 			TranspiledProgram:      api.NewNilString(j.TranspiledQASM),
-			Stats:                  api.NewNilString(j.Result.TranspilerInfo.Stats),
-			VirtualPhysicalMapping: api.NewNilString(j.Result.TranspilerInfo.PhysicalVirtualMapping.String()),
+			Stats:                  api.NewNilJobsTranspileResultStats(statsMap),
+			VirtualPhysicalMapping: api.NewNilJobsTranspileResultVirtualPhysicalMapping(vpMap),
 		}
 		ontr = api.NewOptNilJobsTranspileResult(tr)
 	} else {

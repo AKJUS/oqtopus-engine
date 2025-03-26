@@ -296,14 +296,23 @@ func estimationPreProcess(j *EstimationJob) (preprocessedQASMs []string, grouped
 	// Convert VirtualPhysicalMapping to sorted mapping list
 	keys := []uint32{}
 	for k := range j.JobData().Result.TranspilerInfo.VirtualPhysicalMapping {
-		keys = append(keys, k)
+		keys = append(keys, uint32(k))
 	}
 	sort.Slice(keys, func(i, j int) bool {
 		return keys[i] < keys[j]
 	})
 	mappingList := []uint32{}
+	mapping := map[uint32]uint32{}
+	if j.JobData().NeedTranspiling() {
+		if err := json.Unmarshal(j.JobData().Result.TranspilerInfo.VirtualPhysicalMapping, &mapping); err != nil {
+			zap.L().Error(fmt.Sprintf("failed to unmarshal virtualPhysicalMapping:%s/reason:%s",
+				j.JobData().Result.TranspilerInfo.VirtualPhysicalMapping, err))
+			return nil, "", err
+		}
+	}
+
 	for _, key := range keys {
-		mappingList = append(mappingList, j.JobData().Result.TranspilerInfo.VirtualPhysicalMapping[uint32(key)])
+		mappingList = append(mappingList, mapping[key])
 	}
 	zap.L().Debug(fmt.Sprintf("default basis gates:%v", j.setting.BasisGates))
 	// prepare gRPC request

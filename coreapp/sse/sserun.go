@@ -621,12 +621,23 @@ func setResultToOutputJob(outputJob *core.JobData, outPath string, fileName stri
 		return err
 	}
 
+	statsByte, err := json.Marshal(contents.JobInfo.TranspileResult.Stats)
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("failed to marshal stats, reason:%s", err))
+		return err
+	}
+	vpmByte, err := json.Marshal(contents.JobInfo.TranspileResult.VirtualPhysicalMapping)
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("failed to marshal vpm, reason:%s", err))
+		return err
+	}
+
 	// Set the result to outputJob
 	outputJob.Result = &core.Result{
 		Counts: contents.JobInfo.Result.Sampling.Counts,
 		TranspilerInfo: &core.TranspilerInfo{
-			Stats:                  contents.JobInfo.TranspileResult.Stats,
-			VirtualPhysicalMapping: contents.JobInfo.TranspileResult.VirtualPhysicalMapping,
+			Stats:                  statsByte,
+			VirtualPhysicalMapping: vpmByte,
 		},
 		Message: contents.JobInfo.Message,
 	}
