@@ -396,7 +396,7 @@ func useTranspiler(ti api.OptNilJobsJobDefTranspilerInfo) bool {
 func useDefaultTranspiler(ti api.OptNilJobsJobDefTranspilerInfo) bool {
 	t, ok := ti.Get()
 	if !ok {
-		zap.L().Error("failed to get transpiler info")
+		zap.L().Info("not find transpiler info")
 		return true
 	}
 	if _, ok := t["transpiler_lib"]; !ok {
