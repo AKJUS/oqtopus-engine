@@ -26,8 +26,8 @@ steps:
                status: submitted
     test: | 
       current.res.status == 200
-    #dump:
-      #expr: current.res.body.job_id + "(mp job) is posted"
+    dump:
+      expr: current.res.body.job_id + "(mp job) is posted"
   wait:
     desc: check job status
     loop:
