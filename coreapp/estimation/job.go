@@ -314,6 +314,8 @@ func estimationPreProcess(j *EstimationJob) (preprocessedQASMs []string, grouped
 	for _, key := range keys {
 		mappingList = append(mappingList, mapping[key])
 	}
+	zap.L().Debug(fmt.Sprintf("mappingList:%v", mappingList))
+	zap.L().Debug(fmt.Sprintf("VirtualPhysicalMapping:%s", j.JobData().Result.TranspilerInfo.VirtualPhysicalMapping))
 	zap.L().Debug(fmt.Sprintf("default basis gates:%v", j.setting.BasisGates))
 	// prepare gRPC request
 	req := &pb.ReqEstimationPreProcessRequest{
