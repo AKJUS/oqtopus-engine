@@ -632,12 +632,19 @@ func setResultToOutputJob(outputJob *core.JobData, outPath string, fileName stri
 		return err
 	}
 
+	vpmMap, err := core.VirtualPhysicalMappingRaw(vpmByte).ToMap()
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("failed to convert vpm to map/byte:%v, reason:%s", vpmByte, err))
+		return err
+	}
+
 	// Set the result to outputJob
 	outputJob.Result = &core.Result{
 		Counts: contents.JobInfo.Result.Sampling.Counts,
 		TranspilerInfo: &core.TranspilerInfo{
-			Stats:                  statsByte,
-			VirtualPhysicalMapping: vpmByte,
+			StatsRaw:                  statsByte,
+			VirtualPhysicalMappingRaw: vpmByte,
+			VirtualPhysicalMappingMap: vpmMap,
 		},
 		Message: contents.JobInfo.Message,
 	}

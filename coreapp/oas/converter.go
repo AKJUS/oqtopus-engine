@@ -89,11 +89,11 @@ func ConvertToCloudJob(j *core.JobData) *api.JobsJobDef {
 	tmpStatsMap := make(map[string]json.RawMessage)
 	statsMap := make(map[string]jx.Raw)
 	if j.Result.TranspilerInfo != nil &&
-		j.Result.TranspilerInfo.Stats != nil &&
-		len(j.Result.TranspilerInfo.Stats) != 0 {
-		if err := json.Unmarshal(j.Result.TranspilerInfo.Stats, &tmpStatsMap); err != nil {
+		j.Result.TranspilerInfo.StatsRaw != nil &&
+		len(j.Result.TranspilerInfo.StatsRaw) != 0 {
+		if err := json.Unmarshal(j.Result.TranspilerInfo.StatsRaw, &tmpStatsMap); err != nil {
 			zap.L().Error(fmt.Sprintf("failed to unmarshal stats string:%s/reason:%s",
-				j.Result.TranspilerInfo.Stats, err))
+				j.Result.TranspilerInfo.StatsRaw, err))
 		} else {
 			for k, v := range tmpStatsMap {
 				statsMap[k] = jx.Raw(v)
@@ -103,9 +103,9 @@ func ConvertToCloudJob(j *core.JobData) *api.JobsJobDef {
 	tmpVpMap := make(map[string]json.RawMessage)
 	vpMap := make(map[string]jx.Raw)
 	if j.Result.TranspilerInfo != nil &&
-		j.Result.TranspilerInfo.VirtualPhysicalMapping != nil &&
-		len(j.Result.TranspilerInfo.VirtualPhysicalMapping) != 0 {
-		if err := json.Unmarshal(j.Result.TranspilerInfo.VirtualPhysicalMapping, &tmpVpMap); err != nil {
+		j.Result.TranspilerInfo.VirtualPhysicalMappingRaw != nil &&
+		len(j.Result.TranspilerInfo.VirtualPhysicalMappingRaw) != 0 {
+		if err := json.Unmarshal(j.Result.TranspilerInfo.VirtualPhysicalMappingRaw, &tmpVpMap); err != nil {
 			zap.L().Error(fmt.Sprintf("failed to unmarshal virtual physical mapping/reason:%s", err))
 		} else {
 			for k, v := range tmpVpMap {

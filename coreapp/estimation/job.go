@@ -296,9 +296,9 @@ func estimationPreProcess(j *EstimationJob) (preprocessedQASMs []string, grouped
 	mappingList := []uint32{}
 	mapping := map[uint32]uint32{}
 	if j.JobData().NeedTranspiling() {
-		if err := json.Unmarshal(j.JobData().Result.TranspilerInfo.VirtualPhysicalMapping, &mapping); err != nil {
-			zap.L().Error(fmt.Sprintf("failed to unmarshal virtualPhysicalMapping:%s/reason:%s",
-				j.JobData().Result.TranspilerInfo.VirtualPhysicalMapping, err))
+		mapping, err = j.JobData().Result.TranspilerInfo.VirtualPhysicalMappingRaw.ToMap()
+		if err != nil {
+			zap.L().Error(fmt.Sprintf("failed to convert VirtualPhysicalMappingRaw to map/reason:%s", err))
 			return nil, "", err
 		}
 	}
@@ -316,7 +316,7 @@ func estimationPreProcess(j *EstimationJob) (preprocessedQASMs []string, grouped
 		mappingList = append(mappingList, mapping[key])
 	}
 	zap.L().Debug(fmt.Sprintf("mappingList:%v", mappingList))
-	zap.L().Debug(fmt.Sprintf("VirtualPhysicalMapping:%s", j.JobData().Result.TranspilerInfo.VirtualPhysicalMapping))
+	zap.L().Debug(fmt.Sprintf("VirtualPhysicalMapping:%s", j.JobData().Result.TranspilerInfo.VirtualPhysicalMappingRaw))
 	zap.L().Debug(fmt.Sprintf("default basis gates:%v", j.setting.BasisGates))
 	// prepare gRPC request
 	req := &pb.ReqEstimationPreProcessRequest{

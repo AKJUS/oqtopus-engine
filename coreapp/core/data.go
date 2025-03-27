@@ -12,11 +12,20 @@ import (
 	"go.uber.org/zap"
 )
 
-type Status int // Status of the job known to the cloud that is not as the same meaning in edge.
-type Stats json.RawMessage
+type Status int               // Status of the job known to the cloud that is not as the same meaning in edge.
+type StatsRaw json.RawMessage // TODO: make StatsMap
 type PhysicalVirtualMapping map[uint32]uint32
-type VirtualPhysicalMapping json.RawMessage
+type VirtualPhysicalMappingRaw json.RawMessage
+type VirtualPhysicalMappingMap map[uint32]uint32
 type Counts map[string]uint32
+
+func NewStatsRawFromString(s string) (StatsRaw, error) {
+	raw, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+	return raw, nil
+}
 
 func (c Counts) String() string {
 	// jsonIter string
@@ -57,7 +66,7 @@ func (p PhysicalVirtualMapping) String() string {
 	return string(st)
 }
 
-func (v VirtualPhysicalMapping) String() string {
+func (v VirtualPhysicalMappingRaw) String() string {
 	// jsonIter string
 	st, err := jsonIter.Marshal(v)
 	if err != nil {
@@ -65,6 +74,23 @@ func (v VirtualPhysicalMapping) String() string {
 		return ""
 	}
 	return string(st)
+}
+
+func (v VirtualPhysicalMappingRaw) ToMap() (VirtualPhysicalMappingMap, error) {
+	m := make(VirtualPhysicalMappingMap)
+	err := json.Unmarshal(v, &m)
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (v VirtualPhysicalMappingMap) ToRaw() (VirtualPhysicalMappingRaw, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }
 
 type DividedResult map[uint32]map[string]uint32 // key1: circuit index, key2: bit string, value: count
@@ -109,9 +135,10 @@ type Result struct {
 }
 
 type TranspilerInfo struct {
-	Stats                  Stats                  `json:"stats"`
-	PhysicalVirtualMapping PhysicalVirtualMapping `json:"physical_virtual_mapping"` // TODO: remove
-	VirtualPhysicalMapping VirtualPhysicalMapping `json:"virtual_physical_mapping"`
+	StatsRaw                  StatsRaw                  `json:"stats"`
+	PhysicalVirtualMapping    PhysicalVirtualMapping    `json:"physical_virtual_mapping"` // TODO: remove
+	VirtualPhysicalMappingRaw VirtualPhysicalMappingRaw `json:"virtual_physical_mapping"`
+	VirtualPhysicalMappingMap VirtualPhysicalMappingMap `json:"-"` // TODO unify with VirtualPhysicalMappingRaw
 }
 
 type Property struct {
@@ -135,11 +162,13 @@ func cloneCounts(counts Counts) Counts {
 func cloneTranspilerInfo(info *TranspilerInfo) *TranspilerInfo {
 	clone := &TranspilerInfo{}
 	clone.PhysicalVirtualMapping = make(PhysicalVirtualMapping)
+
 	for k, v := range info.PhysicalVirtualMapping {
 		clone.PhysicalVirtualMapping[k] = v
 	}
-	for k, v := range info.VirtualPhysicalMapping {
-		clone.VirtualPhysicalMapping[k] = v
+	clone.VirtualPhysicalMappingRaw = VirtualPhysicalMappingRaw(append(json.RawMessage(nil), info.VirtualPhysicalMappingRaw...))
+	for k, v := range info.VirtualPhysicalMappingMap {
+		clone.VirtualPhysicalMappingMap[k] = v
 	}
 	return clone
 }
@@ -197,12 +226,6 @@ func NewJobData() *JobData {
 	return &JobData{
 		Result:  NewResult(),
 		Created: strfmt.DateTime(time.Now()),
-	}
-}
-
-func NewJobDataWithoutCreated() *JobData {
-	return &JobData{
-		Result: NewResult(),
 	}
 }
 

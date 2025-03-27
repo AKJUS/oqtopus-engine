@@ -130,7 +130,7 @@ func (t *Tranqu) Transpile(j core.Job) error {
 		zap.L().Error(fmt.Sprintf("failed to get virtual physical mapping:%s/reason:%s", vpmStr, err))
 		return err
 	}
-	j.JobData().Result.TranspilerInfo.VirtualPhysicalMapping = vpm
+	j.JobData().Result.TranspilerInfo.VirtualPhysicalMappingRaw = vpm
 
 	pvm, err := toPhysicalVirtualMappingFromString(vpmStr)
 	if err != nil {
@@ -140,7 +140,7 @@ func (t *Tranqu) Transpile(j core.Job) error {
 	zap.L().Debug(fmt.Sprintf("physical virtual mapping:%v", pvm))
 	j.JobData().Result.TranspilerInfo.PhysicalVirtualMapping = pvm
 	zap.L().Debug(fmt.Sprintf("transpiled stats:%v", res.GetStats()))
-	j.JobData().Result.TranspilerInfo.Stats = core.Stats(res.GetStats())
+	j.JobData().Result.TranspilerInfo.StatsRaw = core.StatsRaw(res.GetStats())
 	zap.L().Debug(fmt.Sprintf("transpiled program:%s", j.JobData().TranspiledQASM))
 	return nil
 }
@@ -154,22 +154,22 @@ type VirtualPhyicalMapping struct {
 	BitMapping   map[string]int `json:"bit_mapping"`
 }
 
-func toVirtualPhysicalMappingFromString(virtualPhysicalMapping string) (core.VirtualPhysicalMapping, error) {
+func toVirtualPhysicalMappingFromString(virtualPhysicalMapping string) (core.VirtualPhysicalMappingRaw, error) {
 	var m VirtualPhyicalMapping
 	zap.L().Debug(fmt.Sprintf("starting to unmarshal virtualPhysicalMapping:%s", virtualPhysicalMapping))
 	if err := json.Unmarshal([]byte(virtualPhysicalMapping), &m); err != nil {
 		zap.L().Error(fmt.Sprintf("failed to unmarshal virtualPhysicalMapping:%s/reason:%s",
 			virtualPhysicalMapping, err))
-		return core.VirtualPhysicalMapping{}, err
+		return core.VirtualPhysicalMappingRaw{}, err
 	}
 	zap.L().Debug(fmt.Sprintf("unmarshaled virtualPhysicalMapping:%v", m))
 	d, err := json.Marshal(m.QubitMapping)
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("failed to marshal qubit mapping:%v/reason:%s",
 			m.QubitMapping, err))
-		return core.VirtualPhysicalMapping{}, err
+		return core.VirtualPhysicalMappingRaw{}, err
 	}
-	vpm := core.VirtualPhysicalMapping(d)
+	vpm := core.VirtualPhysicalMappingRaw(d)
 	zap.L().Debug(fmt.Sprintf("converted virtual physical mapping:%v", vpm))
 	return vpm, nil
 }

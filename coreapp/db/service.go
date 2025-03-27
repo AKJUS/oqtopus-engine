@@ -172,9 +172,9 @@ func (s *ServiceDB) Update(j core.Job) error {
 				}),
 		})
 	zap.L().Debug(fmt.Sprintf(
-		"JobsUpdateJobInfoRequest/JobID:%s/Status:%s/Message:%s/Stats:%v/TranspiledQASM:%s/VirtualPhysicalMapping:%s",
+		"JobsUpdateJobInfoRequest/JobID:%s/Status:%s/Message:%s/StatsRaw:%v/TranspiledQASM:%s/VirtualPhysicalMapping:%s",
 		jid, cJob.Status, cJob.JobInfo.Message.Value, stats, j.JobData().TranspiledQASM,
-		j.JobData().Result.TranspilerInfo.VirtualPhysicalMapping.String()))
+		j.JobData().Result.TranspilerInfo.VirtualPhysicalMappingRaw.String()))
 	params := api.PatchJobInfoParams{JobID: jid}
 	patchRes, patchErr := s.client.PatchJobInfo(ctx, req, params)
 	if patchErr != nil {
