@@ -20,6 +20,8 @@ type VirtualPhysicalMappingRaw json.RawMessage
 type VirtualPhysicalMappingMap map[uint32]uint32
 type Counts map[string]uint32
 
+var jsonIter = jsoniter.ConfigCompatibleWithStandardLibrary
+
 func NewStatsRawFromString(s string) (StatsRaw, error) {
 	raw, err := json.Marshal(s)
 	if err != nil {
@@ -29,7 +31,6 @@ func NewStatsRawFromString(s string) (StatsRaw, error) {
 }
 
 func (c Counts) String() string {
-	// jsonIter string
 	st, err := jsonIter.Marshal(c)
 	if err != nil {
 		zap.L().Error("Failed to marshal core.Counts")
@@ -58,7 +59,6 @@ func ToStatus(s string) (Status, error) {
 }
 
 func (p PhysicalVirtualMapping) String() string {
-	// jsonIter string
 	st, err := jsonIter.Marshal(p)
 	if err != nil {
 		zap.L().Error("Failed to marshal core.PhysicalVirtualMapping")
@@ -68,7 +68,6 @@ func (p PhysicalVirtualMapping) String() string {
 }
 
 func (v VirtualPhysicalMappingRaw) String() string {
-	// jsonIter string
 	st, err := jsonIter.Marshal(v)
 	if err != nil {
 		zap.L().Error("Failed to marshal core.VirtualPhysicalMapping")
@@ -108,8 +107,6 @@ func (v VirtualPhysicalMappingMap) ToRaw() (VirtualPhysicalMappingRaw, error) {
 }
 
 type DividedResult map[uint32]map[string]uint32 // key1: circuit index, key2: bit string, value: count
-
-var jsonIter = jsoniter.ConfigCompatibleWithStandardLibrary
 
 const (
 	SUBMITTED Status = iota // In the queue in the cloud server.
@@ -263,7 +260,6 @@ func CloneJobData(i *JobData) *JobData {
 }
 
 func (r *Result) ToString() string {
-	// Marshal to jsonIter with key sorted
 	st, err := jsonIter.Marshal(r)
 	if err != nil {
 		zap.L().Error("Failed to marshal core.Result")
@@ -275,8 +271,8 @@ func (r *Result) ToString() string {
 
 // TODO resolve the confusion between TranspilerConfig and TranspilerInfo
 type TranspilerConfig struct {
-	TranspilerLib     *string         `json:"transpiler_lib"`     //(=nil) null means no transpiler
-	TranspilerOptions json.RawMessage `json:"transpiler_options"` // raw jsonIter
+	TranspilerLib     *string         `json:"transpiler_lib"` //(=nil) null means no transpiler
+	TranspilerOptions json.RawMessage `json:"transpiler_options"`
 	UseDefault        bool            `json:"-"`
 }
 
