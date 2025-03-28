@@ -88,6 +88,8 @@ func (v VirtualPhysicalMappingRaw) ToMap() (VirtualPhysicalMappingMap, error) {
 func (v VirtualPhysicalMappingMap) ToRaw() (VirtualPhysicalMappingRaw, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
+		zap.L().Error(fmt.Sprintf("failed to marshal VirtualPhysicalMappingMap:%v/reason:%s",
+			v, err))
 		return nil, err
 	}
 	return b, nil
