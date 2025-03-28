@@ -41,7 +41,7 @@ type ResultFileContentsJobInfo struct {
 }
 type ResultFileContentsTranspileResult struct {
 	TranspiledProgram         string            `json:"transpiled_program"`
-	Stats                     string            `json:"stats"`
+	StatsRaw                  json.RawMessage   `json:"stats"`
 	VirtualPhysicalMappingRaw json.RawMessage   `json:"virtual_physical_mapping"`
 	VirtualPhysicalMappingMap map[uint32]uint32 `json:"-"`
 }
@@ -623,11 +623,6 @@ func setResultToOutputJob(outputJob *core.JobData, outPath string, fileName stri
 	}
 
 	tr := contents.JobInfo.TranspileResult
-	statsByte, err := json.Marshal(tr.Stats)
-	if err != nil {
-		zap.L().Error(fmt.Sprintf("failed to marshal stats, reason:%s", err))
-		return err
-	}
 
 	vpmRaw := core.VirtualPhysicalMappingRaw(tr.VirtualPhysicalMappingRaw)
 	vpmMap, err := vpmRaw.ToMap()
@@ -640,7 +635,7 @@ func setResultToOutputJob(outputJob *core.JobData, outPath string, fileName stri
 	outputJob.Result = &core.Result{
 		Counts: contents.JobInfo.Result.Sampling.Counts,
 		TranspilerInfo: &core.TranspilerInfo{
-			StatsRaw:                  statsByte,
+			StatsRaw:                  core.StatsRaw(tr.StatsRaw),
 			VirtualPhysicalMappingRaw: vpmRaw,
 			VirtualPhysicalMappingMap: vpmMap,
 		},
