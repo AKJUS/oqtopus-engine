@@ -93,9 +93,9 @@ def _make_job_def(
 
     # transpile result related data
     transpiled_program = response.transpiled_qasm or ""
-    stats = result_dict.get("transpiler_info", {}).get("stats", "")
+    stats = result_dict.get("transpiler_info", {}).get("stats", "") or ""
     virtual_physical_mapping = json.dumps(
-        result_dict.get("transpiler_info", {}).get("virtual_physical_mapping", {})
+        result_dict.get("transpiler_info", {}).get("virtual_physical_mapping", {}) or {}
     )
 
     # job_info related data
