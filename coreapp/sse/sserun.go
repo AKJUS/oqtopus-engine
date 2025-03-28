@@ -622,20 +622,25 @@ func setResultToOutputJob(outputJob *core.JobData, outPath string, fileName stri
 		return err
 	}
 
-	statsByte, err := json.Marshal(contents.JobInfo.TranspileResult.Stats)
+	tr := contents.JobInfo.TranspileResult
+	statsByte, err := json.Marshal(tr.Stats)
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("failed to marshal stats, reason:%s", err))
 		return err
 	}
-	vpmByte, err := json.Marshal(contents.JobInfo.TranspileResult.VirtualPhysicalMappingRaw)
-	if err != nil {
-		zap.L().Error(fmt.Sprintf("failed to marshal vpm, reason:%s", err))
-		return err
-	}
 
-	vpmMap, err := core.VirtualPhysicalMappingRaw(vpmByte).ToMap()
+	/*
+		vpmByte, err := json.Marshal(tr.VirtualPhysicalMappingRaw)
+		if err != nil {
+			zap.L().Error(fmt.Sprintf("failed to marshal vpm, reason:%s", err))
+			return err
+		}
+	*/
+
+	vpmRaw := core.VirtualPhysicalMappingRaw(tr.VirtualPhysicalMappingRaw)
+	vpmMap, err := vpmRaw.ToMap()
 	if err != nil {
-		zap.L().Error(fmt.Sprintf("failed to convert vpm to map/byte:%v, reason:%s", vpmByte, err))
+		zap.L().Error(fmt.Sprintf("failed to convert vpm to map/raw:%v, reason:%s", vpmRaw, err))
 		return err
 	}
 
@@ -644,7 +649,7 @@ func setResultToOutputJob(outputJob *core.JobData, outPath string, fileName stri
 		Counts: contents.JobInfo.Result.Sampling.Counts,
 		TranspilerInfo: &core.TranspilerInfo{
 			StatsRaw:                  statsByte,
-			VirtualPhysicalMappingRaw: vpmByte,
+			VirtualPhysicalMappingRaw: vpmRaw,
 			VirtualPhysicalMappingMap: vpmMap,
 		},
 		Message: contents.JobInfo.Message,
