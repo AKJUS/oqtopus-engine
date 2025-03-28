@@ -1,4 +1,4 @@
-desc: Run SSE job with default transpiler
+desc: SSE job with default transpiler
 runners:
   req: https://${USER_API_ENDPOINT}
 vars:

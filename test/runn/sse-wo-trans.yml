@@ -1,4 +1,4 @@
-desc: Run SSE job without transpiler
+desc: SSE job without transpiler
 runners:
   req: https://${USER_API_ENDPOINT}
 vars:
