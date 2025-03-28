@@ -188,7 +188,10 @@ func (s *ServiceDB) Update(j core.Job) error {
 	}
 	zap.L().Debug(fmt.Sprintf("updated the job info of %s/response:%s", jid, reflect.TypeOf(res).String()))
 
-	return s.putTranspilerInfo(cJob)
+	if j.JobData().NeedsUpdateTranspilerInfo {
+		return s.putTranspilerInfo(cJob)
+	}
+	return nil
 }
 
 func (s *ServiceDB) Delete(jobID string) error {

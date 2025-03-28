@@ -164,6 +164,7 @@ func ConvertFromCloudJob(j *api.JobsJobDef) *core.JobData {
 		if useDefaultTranspiler(j.TranspilerInfo) {
 			zap.L().Debug("use default transpiler config")
 			jd.Transpiler = core.DEFAULT_TRANSPILER_CONFIG()
+			jd.NeedsUpdateTranspilerInfo = true
 		} else {
 			zap.L().Debug("use specified transpiler config")
 			jd.Transpiler = convertToTranspilerInfoFromONTI(j.TranspilerInfo)

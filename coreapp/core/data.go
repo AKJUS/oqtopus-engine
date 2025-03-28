@@ -206,7 +206,8 @@ type JobData struct {
 	MitigationInfo string
 
 	// VeryAdhoc
-	UseJobInfoUpdate bool
+	UseJobInfoUpdate          bool
+	NeedsUpdateTranspilerInfo bool
 }
 
 func (jd *JobData) Clone() *JobData {
