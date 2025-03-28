@@ -629,14 +629,6 @@ func setResultToOutputJob(outputJob *core.JobData, outPath string, fileName stri
 		return err
 	}
 
-	/*
-		vpmByte, err := json.Marshal(tr.VirtualPhysicalMappingRaw)
-		if err != nil {
-			zap.L().Error(fmt.Sprintf("failed to marshal vpm, reason:%s", err))
-			return err
-		}
-	*/
-
 	vpmRaw := core.VirtualPhysicalMappingRaw(tr.VirtualPhysicalMappingRaw)
 	vpmMap, err := vpmRaw.ToMap()
 	if err != nil {

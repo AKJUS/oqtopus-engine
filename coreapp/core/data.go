@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -77,14 +78,25 @@ func (v VirtualPhysicalMappingRaw) String() string {
 }
 
 func (v VirtualPhysicalMappingRaw) ToMap() (VirtualPhysicalMappingMap, error) {
-	m := make(VirtualPhysicalMappingMap)
-	err := json.Unmarshal(v, &m)
-	if err != nil {
-		zap.L().Error(fmt.Sprintf("failed to marshal VirtualPhysicalMappingMap:%v/reason:%s",
+	// Since JSON object keys are always strings, unmarshaling directly into a map[uint32]uint32
+	// will result in an error. Therefore, we first unmarshal into a map[string]uint32,
+	// and then convert it to a map[uint32]uint32.
+	var temp map[string]uint32
+	if err := json.Unmarshal(v, &temp); err != nil {
+		zap.L().Error(fmt.Sprintf("failed to unmarshal VirtualPhysicalMappingMapRaw:%v/reason:%s",
 			v, err))
-		return nil, err
 	}
-	return m, nil
+
+	result := make(map[uint32]uint32)
+	for k, v := range temp {
+		key, err := strconv.ParseUint(k, 10, 32)
+		if err != nil {
+			zap.L().Error(fmt.Sprintf("failed to convert key:%s/reason:%s", k, err))
+			return nil, err
+		}
+		result[uint32(key)] = v
+	}
+	return result, nil
 }
 
 func (v VirtualPhysicalMappingMap) ToRaw() (VirtualPhysicalMappingRaw, error) {
