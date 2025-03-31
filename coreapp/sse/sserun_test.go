@@ -48,10 +48,10 @@ func TestContainerDefinition_Setup(t *testing.T) {
 		ID            string
 	}
 	type args struct {
-		containerName      string
-		envVars            []string
-		containerImageName string
-		qmtRouterHostName  string
+		containerName         string
+		envVars               []string
+		containerImageName    string
+		gatewayRouterHostName string
 	}
 	tests := []struct {
 		name      string
@@ -68,10 +68,10 @@ func TestContainerDefinition_Setup(t *testing.T) {
 				ID:            "",
 			},
 			args: args{
-				containerName:      "testContainer",
-				envVars:            []string{"env1", "env2"},
-				containerImageName: "testImage",
-				qmtRouterHostName:  "grpc.host.name",
+				containerName:         "testContainer",
+				envVars:               []string{"env1", "env2"},
+				containerImageName:    "testImage",
+				gatewayRouterHostName: "grpc.host.name",
 			},
 			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.NoError(t, err)
@@ -86,11 +86,11 @@ func TestContainerDefinition_Setup(t *testing.T) {
 				client:        tt.fields.client,
 				ID:            tt.fields.ID,
 			}
-			tt.assertion(t, c.Setup(tt.args.containerName, tt.args.envVars, tt.args.containerImageName, tt.args.qmtRouterHostName))
+			tt.assertion(t, c.Setup(tt.args.containerName, tt.args.envVars, tt.args.containerImageName, tt.args.gatewayRouterHostName))
 			assert.Equal(t, tt.args.containerName, c.containerName)
 			assert.Equal(t, tt.args.containerImageName, c.config.Image)
 			assert.Equal(t, tt.args.envVars, c.config.Env)
-			assert.Equal(t, tt.args.qmtRouterHostName, c.qmtRouterHost)
+			assert.Equal(t, tt.args.gatewayRouterHostName, c.gatewayRouterHost)
 		})
 	}
 }

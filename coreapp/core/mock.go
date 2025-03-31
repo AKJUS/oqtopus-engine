@@ -186,10 +186,10 @@ func (u *unimplementedScheduler) HandleJob(_ Job)             { return }
 func (u *unimplementedScheduler) GetCurrentQueueSize() int    { return 0 }
 func (u *unimplementedScheduler) IsOverRefillThreshold() bool { return false }
 
-type unimplementedSSEQMTRouter struct{}
+type unimplementedSSEGatewayRouter struct{} // Renamed from unimplementedSSEQMTRouter
 
-func (u *unimplementedSSEQMTRouter) Setup(container *dig.Container) error { return nil }
-func (u *unimplementedSSEQMTRouter) TearDown()                            {}
+func (u *unimplementedSSEGatewayRouter) Setup(container *dig.Container) error { return nil } // Renamed from unimplementedSSEQMTRouter
+func (u *unimplementedSSEGatewayRouter) TearDown()                            {}             // Renamed from unimplementedSSEQMTRouter
 
 func SCWithUnimplementedContainer() *SystemComponents {
 	c := dig.New()
@@ -201,7 +201,7 @@ func SCWithUnimplementedContainer() *SystemComponents {
 		return db
 	})
 	c.Provide(func() Scheduler { return &unimplementedScheduler{} })
-	c.Provide(func() SSEQMTRouter { return &unimplementedSSEQMTRouter{} })
+	c.Provide(func() SSEGatewayRouter { return &unimplementedSSEGatewayRouter{} }) // Renamed from SSEQMTRouter
 	s := NewSystemComponents(c)
 	s.Setup(&Conf{})
 	return s
@@ -217,7 +217,7 @@ func SCWithValidateErrorContainer() *SystemComponents {
 		return db
 	})
 	c.Provide(func() Scheduler { return &unimplementedScheduler{} })
-	c.Provide(func() SSEQMTRouter { return &unimplementedSSEQMTRouter{} })
+	c.Provide(func() SSEGatewayRouter { return &unimplementedSSEGatewayRouter{} }) // Renamed from SSEQMTRouter
 	s := NewSystemComponents(c)
 	s.Setup(&Conf{})
 	return s
@@ -229,7 +229,7 @@ func SCWithDBContainer() *SystemComponents {
 	c.Provide(func() DBManager { return &MemoryDB{} })
 	c.Provide(func() Transpiler { return &successTranspilerForTest{} })
 	c.Provide(func() Scheduler { return &unimplementedScheduler{} })
-	c.Provide(func() SSEQMTRouter { return &unimplementedSSEQMTRouter{} })
+	c.Provide(func() SSEGatewayRouter { return &unimplementedSSEGatewayRouter{} }) // Renamed from SSEQMTRouter
 	s := NewSystemComponents(c)
 	s.Setup(&Conf{})
 	return s
@@ -241,7 +241,7 @@ func SCWithScheduler(sc Scheduler) *SystemComponents {
 	c.Provide(func() DBManager { return &MemoryDB{} })
 	c.Provide(func() Transpiler { return &successTranspilerForTest{} })
 	c.Provide(func() Scheduler { return sc })
-	c.Provide(func() SSEQMTRouter { return &unimplementedSSEQMTRouter{} })
+	c.Provide(func() SSEGatewayRouter { return &unimplementedSSEGatewayRouter{} }) // Renamed from SSEQMTRouter
 	s := NewSystemComponents(c)
 	s.Setup(&Conf{QueueMaxSize: 1000})
 	return s
