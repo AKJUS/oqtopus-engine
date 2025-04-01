@@ -3,7 +3,6 @@ dotenv: ['.env']
 vars:
   MAIN_PKG: "cmd/edge/main.go"
   BIN_DIR: "./bin"
-  OAS_DIR: "./oas"
   CORE_APP_BIN_NAME: "engine"
   GIT_VERSION:
     sh: git describe --tags --always --dirty
@@ -93,5 +92,4 @@ tasks:
       - go run {{.MAIN_PKG}} poller --help
 includes:
   oas:
-    taskfile: "{{.OAS_DIR}}/Taskfile.yml"
-    dir: "{{.OAS_DIR}}"
+    taskfile: "oas/Taskfile.yml"
