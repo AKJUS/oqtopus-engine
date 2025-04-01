@@ -210,47 +210,67 @@ func (q *DefaultGatewayAgent) GetAddress() string {
 func (q *DefaultGatewayAgent) uploadDIOnChange(newDI *core.DeviceInfo) {
 	// TODO: refactor this long function
 	updated := false
-	if q.lastDeviceInfo == nil || q.lastDeviceInfo.Status != newDI.Status {
-		st := toDeviceDeviceStatusUpdateStatus(newDI.Status)
-		req := api.NewOptDevicesDeviceStatusUpdate(
-			api.DevicesDeviceStatusUpdate{Status: st})
-		params := api.PatchDeviceStatusParams{
-			DeviceID: q.setting.DeviceId,
-		}
-		zap.L().Debug(fmt.Sprintf("status update to %s", st))
-		res, err := q.apiClient.PatchDeviceStatus(context.TODO(), req, params)
-		if err != nil {
+	if hasStatusChanged(q.lastDeviceInfo, newDI) {
+		if err := q.updateDeviceStatus(newDI.Status); err != nil {
 			zap.L().Error(fmt.Sprintf("failed to update device status/reason:%s", err))
-			return
+		} else {
+			updated = true
 		}
-		zap.L().Debug(fmt.Sprintf("updated device status %v", res))
-		updated = true
 	}
-	if q.lastDeviceInfo == nil || q.lastDeviceInfo.CalibratedAt != newDI.CalibratedAt {
-		caStr := strToTime(newDI.CalibratedAt)
-		req := api.NewOptDevicesDeviceInfoUpdate(
-			api.DevicesDeviceInfoUpdate{
-				DeviceInfo:   api.NewNilString(newDI.DeviceInfoSpecJson),
-				CalibratedAt: api.NewOptNilDateTime(caStr),
-			})
-		params := api.PatchDeviceInfoParams{
-			DeviceID: q.setting.DeviceId,
-		}
-		zap.L().Debug(fmt.Sprintf("calibrated at update to %s", caStr))
-		res, err := q.apiClient.PatchDeviceInfo(context.TODO(), req, params)
-		if err != nil {
+	if hasDeviceInfoChanged(q.lastDeviceInfo, newDI) {
+		if err := q.updateDeviceInfo(newDI); err != nil {
 			zap.L().Error(fmt.Sprintf("failed to update device info/reason:%s", err))
-			return
+		} else {
+			updated = true
 		}
-		zap.L().Debug(fmt.Sprintf("updated device info %v", res))
-		updated = true
 	}
 	if updated {
 		q.lastDeviceInfo = newDI
 	} else {
 		zap.L().Debug("no updated device info")
 	}
-	return
+}
+
+func (q *DefaultGatewayAgent) updateDeviceStatus(st core.DeviceStatus) error {
+	apiSt := toDeviceDeviceStatusUpdateStatus(st)
+	req := api.NewOptDevicesDeviceStatusUpdate(
+		api.DevicesDeviceStatusUpdate{Status: apiSt})
+	params := api.PatchDeviceStatusParams{
+		DeviceID: q.setting.DeviceId,
+	}
+	zap.L().Debug(fmt.Sprintf("status update to %s", st))
+	res, err := q.apiClient.PatchDeviceStatus(context.TODO(), req, params)
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("failed to update device status/reason:%s", err))
+	} else {
+		zap.L().Debug(fmt.Sprintf("updated device status %v", res))
+	}
+	return err
+}
+
+func (q *DefaultGatewayAgent) updateDeviceInfo(di *core.DeviceInfo) error {
+	caStr, err := strToTime(di.CalibratedAt)
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("failed to parse time %s/reason:%s", di.CalibratedAt, err))
+		return err
+	}
+
+	req := api.NewOptDevicesDeviceInfoUpdate(
+		api.DevicesDeviceInfoUpdate{
+			DeviceInfo:   api.NewNilString(di.DeviceInfoSpecJson),
+			CalibratedAt: api.NewOptNilDateTime(caStr),
+		})
+	params := api.PatchDeviceInfoParams{
+		DeviceID: q.setting.DeviceId,
+	}
+	zap.L().Debug(fmt.Sprintf("calibrated at update to %s", caStr))
+	res, err := q.apiClient.PatchDeviceInfo(context.TODO(), req, params)
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("failed to update device info/reason:%s", err))
+	} else {
+		zap.L().Debug(fmt.Sprintf("updated device info %v", res))
+	}
+	return err
 }
 
 func toDeviceDeviceStatusUpdateStatus(ds core.DeviceStatus) api.DevicesDeviceStatusUpdateStatus {
@@ -265,11 +285,68 @@ func toDeviceDeviceStatusUpdateStatus(ds core.DeviceStatus) api.DevicesDeviceSta
 	}
 }
 
-func strToTime(t string) time.Time {
+func strToTime(t string) (time.Time, error) {
 	tt, err := time.Parse("2006-01-02 15:04:05.999999", t)
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("failed to parse time %s/reason:%s", t, err))
-		return time.Time{}
+		return time.Time{}, err
 	}
-	return tt
+	return tt, nil
+}
+
+func hasStatusChanged(oldSt, newSt *core.DeviceInfo) bool {
+	if oldSt == nil {
+		zap.L().Debug("old device info is nil")
+		return true
+	}
+	if newSt == nil {
+		zap.L().Error("new device info is nil")
+		return true
+	}
+	if oldSt.Status != newSt.Status {
+		zap.L().Debug("Status is changed")
+		return true
+	}
+	return false
+}
+
+func hasDeviceInfoChanged(oldDI, newDI *core.DeviceInfo) bool {
+	if oldDI == nil {
+		zap.L().Debug("old device info is nil")
+		return true
+	}
+	if newDI == nil {
+		zap.L().Error("new device info is nil")
+		return true
+	}
+	// not check status because it is updated in the uploadDIOnChange
+	if oldDI.CalibratedAt != newDI.CalibratedAt {
+		zap.L().Debug("CalibratedAt is changed")
+		return true
+	}
+	if oldDI.DeviceInfoSpecJson != newDI.DeviceInfoSpecJson {
+		zap.L().Debug("DeviceInfoSpecJson is changed")
+		return true
+	}
+	if oldDI.MaxQubits != newDI.MaxQubits {
+		zap.L().Debug("MaxQubits is changed")
+		return true
+	}
+	if oldDI.MaxShots != newDI.MaxShots {
+		zap.L().Debug("MaxShots is changed")
+		return true
+	}
+	if oldDI.ProviderName != newDI.ProviderName {
+		zap.L().Debug("ProviderName is changed")
+		return true
+	}
+	if oldDI.DeviceName != newDI.DeviceName {
+		zap.L().Debug("DeviceName is changed")
+		return true
+	}
+	if oldDI.Type != newDI.Type {
+		zap.L().Debug("Type is changed")
+		return true
+	}
+	return false
 }
