@@ -25,4 +25,4 @@ COPY . /app
 RUN go build -o /go/bin/edge ./cmd/edge/main.go
 
 # run application
-CMD ["edge", "poller", "--qpu=qmt", "--db=service", "--transpiler=tranqu", "--log-level=debug", "--enable-file-log", "--log-dir=logs", "--dev-mode", "--setting-path=./setting/setting.toml", "--device-setting-path=./setting/device_setting.toml"]
+CMD ["edge", "poller", "--qpu=gateway", "--db=service", "--transpiler=tranqu", "--log-level=debug", "--enable-file-log", "--log-dir=logs", "--dev-mode", "--setting-path=./setting/setting.toml", "--device-setting-path=./setting/device_setting.toml"]
