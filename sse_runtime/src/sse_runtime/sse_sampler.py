@@ -35,10 +35,10 @@ def req_transpile_and_exec(
 
     """
     # get gRPC server address and port from environment variables
-    grpc_sse_qmt_router_host = os.environ.get("GRPC_SSE_QMT_ROUTER_HOST",
-                                              "sse.qmt.router")
-    grpc_sse_qmt_router_port = os.environ.get("GRPC_SSE_QMT_ROUTER_PORT",
-                                              "5001")
+    grpc_sse_gateway_router_host = os.environ.get("GRPC_SSE_GATEWAY_ROUTER_HOST", # Renamed env var
+                                                  "sse.gateway.router") # Renamed default value
+    grpc_sse_gateway_router_port = os.environ.get("GRPC_SSE_GATEWAY_ROUTER_PORT", # Renamed env var
+                                                  "5001")
 
     # get job data from environment variable
     job_json = os.environ.get("JOB_DATA_JSON")
@@ -47,7 +47,7 @@ def req_transpile_and_exec(
         raise OSError(msg)
 
     with grpc.insecure_channel(
-        f"{grpc_sse_qmt_router_host}:{grpc_sse_qmt_router_port}"
+        f"{grpc_sse_gateway_router_host}:{grpc_sse_gateway_router_port}" # Renamed variables
     ) as channel:
         created = datetime.datetime.now(tz=datetime.UTC) \
                                     .strftime("%Y-%m-%d %H:%M:%S")
