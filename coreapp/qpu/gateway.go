@@ -12,7 +12,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	// Removed duplicate import of common below
 )
 
 type GatewayAgent interface {
@@ -88,8 +87,7 @@ func (q *DefaultGatewayAgent) Setup() (err error) {
 	q.gatewayAddress = address
 	apiClient, err := common.NewAPIClient(q.setting.APIEndpoint, q.setting.APIKey) // Use common.NewAPIClient
 	if err != nil {
-		// Error is already logged in common.NewAPIClient
-		// zap.L().Error(fmt.Sprintf("failed to create a new API client/reason:%s", err))
+		zap.L().Error(fmt.Sprintf("failed to create a new API client/reason:%s", err))
 	}
 	q.apiClient = apiClient
 	q.Reset()
@@ -255,7 +253,6 @@ func (q *DefaultGatewayAgent) uploadDIOnChange(newDI *core.DeviceInfo) {
 	return
 }
 
-// Restored helper functions specific to this package
 func toDeviceDeviceStatusUpdateStatus(ds core.DeviceStatus) api.DevicesDeviceStatusUpdateStatus {
 	switch ds {
 	case core.Available:
@@ -276,46 +273,3 @@ func strToTime(t string) time.Time {
 	}
 	return tt
 }
-
-// Removed duplicated definitions below as they likely exist elsewhere in the package or imports. (Kept restored functions above)
-// // TODO: unify with poller
-// type SecuritySource struct {
-// 	apiKey string
-// }
-//
-// func (p SecuritySource) ApiKeyAuth(ctx context.Context, name api.OperationName) (api.ApiKeyAuth, error) {
-// 	apiKeyAuth := api.ApiKeyAuth{}
-// 	apiKeyAuth.SetAPIKey(p.apiKey)
-// 	return apiKeyAuth, nil
-// }
-//
-// func newAPIClient(endpoint, apiKey string) (*api.Client, error) {
-// 	ss := SecuritySource{apiKey: apiKey}
-// 	cli, err := api.NewClient("https://"+endpoint, ss)
-// 	if err != nil {
-// 		zap.L().Error(fmt.Sprintf("failed to create a new API client/reason:%s", err))
-// 		return nil, err
-// 	}
-// 	return cli, nil
-// }
-//
-// func toDeviceDeviceStatusUpdateStatus(ds core.DeviceStatus) api.DevicesDeviceStatusUpdateStatus {
-// 	switch ds {
-// 	case core.Available:
-// 		return api.DevicesDeviceStatusUpdateStatusAvailable
-// 	case core.Unavailable:
-// 		return api.DevicesDeviceStatusUpdateStatusUnavailable
-// 	default:
-// 		zap.L().Error(fmt.Sprintf("unknown device status %d", ds))
-// 		return api.DevicesDeviceStatusUpdateStatusUnavailable
-// 	}
-// }
-//
-// func strToTime(t string) time.Time {
-// 	tt, err := time.Parse("2006-01-02 15:04:05.999999", t)
-// 	if err != nil {
-// 		zap.L().Error(fmt.Sprintf("failed to parse time %s/reason:%s", t, err))
-// 		return time.Time{}
-// 	}
-// 	return tt
-// }
