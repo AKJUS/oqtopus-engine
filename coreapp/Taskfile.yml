@@ -17,7 +17,7 @@ tasks:
         SP: '{{.SETTING_PATH | default "./setting/setting.toml"}}'
     cmds:
       - >
-        bash -c 'nohup ./{{.CORE_APP_BIN_NAME}} poller --log-level=debug --qpu=qmt
+        bash -c 'nohup ./{{.CORE_APP_BIN_NAME}} poller --log-level=debug --qpu=gateway
         --transpiler=tranqu --setting-path={{.SP}}
         --db=service --enable-file-log --log-dir={{.LD}} --dev-mode
         --device-setting-path=./setting/device_setting.toml >/dev/null 2>&1 & echo $! > ./engine.pid'
@@ -28,7 +28,7 @@ tasks:
         SP: '{{.SETTING_PATH | default "./setting/setting.toml"}}'
     cmds:
       - >
-        bash -c './{{.CORE_APP_BIN_NAME}} poller --log-level=debug --qpu=qmt
+        bash -c './{{.CORE_APP_BIN_NAME}} poller --log-level=debug --qpu=gateway
         --transpiler=tranqu --setting-path={{.SP}}
         --db=service --enable-file-log --log-dir={{.LD}} --dev-mode
         --device-setting-path=./setting/device_setting.toml'
@@ -39,7 +39,7 @@ tasks:
       SP: '{{.SETTING_PATH | default "./setting/setting.toml"}}'
     cmds:
       - >
-        go run {{.MAIN_PKG}} poller --log-level=debug --qpu=qmt --db=service --transpiler=tranqu --setting-path={{.SP}}
+        go run {{.MAIN_PKG}} poller --log-level=debug --qpu=gateway --db=service --transpiler=tranqu --setting-path={{.SP}}
         --enable-file-log --log-dir={{.LD}} --dev-mode --device-setting-path=./setting/device_setting.toml
   build-start:
     desc: "Build And engine in coop environment"
