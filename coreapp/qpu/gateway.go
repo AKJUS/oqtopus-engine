@@ -15,7 +15,7 @@ import (
 	// Removed duplicate import of common below
 )
 
-type GatewayAgent interface { // Renamed from QMTAgent
+type GatewayAgent interface {
 	Setup() error
 	CallDeviceInfo() (*core.DeviceInfo, error)
 	CallJob(core.Job) error
@@ -25,67 +25,67 @@ type GatewayAgent interface { // Renamed from QMTAgent
 	GetAddress() string
 }
 
-type DefaultGatewayAgentSetting struct { // Renamed from DefaultQMTAgentSetting
-	GatewayHost string `toml:"gateway_host"` // Renamed from QMTHost, qmt_host
-	GatewayPort string `toml:"gateway_port"` // Renamed from QMTPort, qmt_port
+type DefaultGatewayAgentSetting struct {
+	GatewayHost string `toml:"gateway_host"`
+	GatewayPort string `toml:"gateway_port"`
 	APIEndpoint string `toml:"api_endpoint"`
 	APIKey      string `toml:"api_key"`
 	DeviceId    string `toml:"device_id"`
 }
 
-func NewDefaultGatewayAgentSetting() DefaultGatewayAgentSetting { // Renamed from NewDefaultQMTAgentSetting
-	return DefaultGatewayAgentSetting{ // Renamed from DefaultQMTAgentSetting
-		GatewayHost: "localhost", // Renamed from QMTHost
-		GatewayPort: "50051",     // Renamed from QMTPort
+func NewDefaultGatewayAgentSetting() DefaultGatewayAgentSetting {
+	return DefaultGatewayAgentSetting{
+		GatewayHost: "localhost",
+		GatewayPort: "50051",
 		APIEndpoint: "localhost",
 		APIKey:      "hogehoge",
 		DeviceId:    "hogehoge",
 	}
 }
 
-type DefaultGatewayAgent struct { // Renamed from DefaultQMTAgent
-	setting        DefaultGatewayAgentSetting // Renamed from DefaultQMTAgentSetting
-	gatewayAddress string                     // Renamed from qmtAddress
-	gatewayConn    *grpc.ClientConn           // Renamed from qmtConn
+type DefaultGatewayAgent struct {
+	setting        DefaultGatewayAgentSetting
+	gatewayAddress string
+	gatewayConn    *grpc.ClientConn
 	apiConn        *grpc.ClientConn
-	gatewayClient  qint.QpuServiceClient // Renamed from qmtClient
+	gatewayClient  qint.QpuServiceClient
 	apiClient      *api.Client
 	ctx            context.Context
 
 	lastDeviceInfo *core.DeviceInfo
 }
 
-func NewGatewayAgent() *DefaultGatewayAgent { // Renamed from NewQMTAgent
-	return &DefaultGatewayAgent{} // Renamed from DefaultQMTAgent
+func NewGatewayAgent() *DefaultGatewayAgent {
+	return &DefaultGatewayAgent{}
 }
 
-func (q *DefaultGatewayAgent) Setup() (err error) { // Renamed from DefaultQMTAgent
-	s, ok := core.GetComponentSetting("gateway") // Renamed from "qmt"
+func (q *DefaultGatewayAgent) Setup() (err error) {
+	s, ok := core.GetComponentSetting("gateway")
 	if !ok {
-		msg := "gateway setting is not found" // Renamed from "qmt"
+		msg := "gateway setting is not found"
 		return fmt.Errorf(msg)
 	}
-	zap.L().Debug(fmt.Sprintf("gateway setting:%v", s)) // Renamed from "qmt"
+	zap.L().Debug(fmt.Sprintf("gateway setting:%v", s))
 	// TODO: fix this adhoc
 	// partial setting is not allowed...
 	mapped, ok := s.(map[string]interface{})
 	if !ok {
-		q.setting = NewDefaultGatewayAgentSetting() // Renamed from NewDefaultQMTAgentSetting
+		q.setting = NewDefaultGatewayAgentSetting()
 	} else {
-		q.setting = DefaultGatewayAgentSetting{ // Renamed from DefaultQMTAgentSetting
-			GatewayHost: mapped["gateway_host"].(string), // Renamed from QMTHost, qmt_host
-			GatewayPort: mapped["gateway_port"].(string), // Renamed from QMTPort, qmt_port
+		q.setting = DefaultGatewayAgentSetting{
+			GatewayHost: mapped["gateway_host"].(string),
+			GatewayPort: mapped["gateway_port"].(string),
 			APIEndpoint: mapped["api_endpoint"].(string),
 			APIKey:      mapped["api_key"].(string),
 			DeviceId:    mapped["device_id"].(string),
 		}
 	}
 	err = nil
-	address, err := common.ValidAddress(q.setting.GatewayHost, q.setting.GatewayPort) // Renamed from QMTHost, QMTPort
+	address, err := common.ValidAddress(q.setting.GatewayHost, q.setting.GatewayPort)
 	if err != nil {
 		return err
 	}
-	q.gatewayAddress = address                                                     // Renamed from qmtAddress
+	q.gatewayAddress = address
 	apiClient, err := common.NewAPIClient(q.setting.APIEndpoint, q.setting.APIKey) // Use common.NewAPIClient
 	if err != nil {
 		// Error is already logged in common.NewAPIClient
@@ -96,21 +96,21 @@ func (q *DefaultGatewayAgent) Setup() (err error) { // Renamed from DefaultQMTAg
 	return nil
 }
 
-func (q *DefaultGatewayAgent) CallDeviceInfo() (*core.DeviceInfo, error) { // Renamed from DefaultQMTAgent
-	resGDI, err := q.gatewayClient.GetDeviceInfo(q.ctx, &qint.GetDeviceInfoRequest{}) // Renamed from qmtClient
+func (q *DefaultGatewayAgent) CallDeviceInfo() (*core.DeviceInfo, error) {
+	resGDI, err := q.gatewayClient.GetDeviceInfo(q.ctx, &qint.GetDeviceInfoRequest{})
 	if err != nil {
 		q.Reset()
-		zap.L().Error(fmt.Sprintf("failed to get device info from %s/reason:%s", q.gatewayAddress, err)) // Renamed from qmtAddress
+		zap.L().Error(fmt.Sprintf("failed to get device info from %s/reason:%s", q.gatewayAddress, err))
 		return &core.DeviceInfo{}, err
 	}
 	di := resGDI.GetBody()
 	zap.L().Debug(fmt.Sprintf(
 		"DeviceID:%s, ProviderID:%s, Type:%s, MaxQubits:%d, MaxShots:%d, DevicedInfo:%s, CalibratedAt:%s",
 		di.DeviceId, di.ProviderId, di.Type, di.MaxQubits, di.MaxShots, di.DeviceInfo, di.CalibratedAt))
-	resSS, err := q.gatewayClient.GetServiceStatus(q.ctx, &qint.GetServiceStatusRequest{}) // Renamed from qmtClient
+	resSS, err := q.gatewayClient.GetServiceStatus(q.ctx, &qint.GetServiceStatusRequest{})
 	if err != nil {
 		q.Reset()
-		zap.L().Error(fmt.Sprintf("failed to get service status from %s/reason:%s", q.gatewayAddress, err)) // Renamed from qmtAddress
+		zap.L().Error(fmt.Sprintf("failed to get service status from %s/reason:%s", q.gatewayAddress, err))
 		return &core.DeviceInfo{}, err
 	}
 	// TODO functionize
@@ -141,7 +141,7 @@ func (q *DefaultGatewayAgent) CallDeviceInfo() (*core.DeviceInfo, error) { // Re
 	return cd, nil
 }
 
-func (q *DefaultGatewayAgent) CallJob(j core.Job) error { // Renamed from DefaultQMTAgent
+func (q *DefaultGatewayAgent) CallJob(j core.Job) error {
 	var qasmToBeSent string
 	if j.JobData().TranspiledQASM == "" {
 		qasmToBeSent = j.JobData().QASM
@@ -150,13 +150,13 @@ func (q *DefaultGatewayAgent) CallJob(j core.Job) error { // Renamed from Defaul
 	}
 
 	startTime := time.Now()
-	resp, err := q.gatewayClient.CallJob(q.ctx, &qint.CallJobRequest{ // Renamed from qmtClient
+	resp, err := q.gatewayClient.CallJob(q.ctx, &qint.CallJobRequest{
 		JobId:   j.JobData().ID,
 		Shots:   uint32(j.JobData().Shots),
 		Program: qasmToBeSent,
 	})
 	if err != nil {
-		zap.L().Error(fmt.Sprintf("failed to call the job in %s/reason:%s", q.gatewayAddress, err)) // Renamed from qmtAddress
+		zap.L().Error(fmt.Sprintf("failed to call the job in %s/reason:%s", q.gatewayAddress, err))
 		return err
 	}
 	endTime := time.Now()
@@ -183,33 +183,33 @@ func (q *DefaultGatewayAgent) CallJob(j core.Job) error { // Renamed from Defaul
 	return nil
 }
 
-func (q *DefaultGatewayAgent) Reset() { // Renamed from DefaultQMTAgent
+func (q *DefaultGatewayAgent) Reset() {
 	q.Close()
 	q.ctx = context.Background()
-	conn, connErr := grpc.NewClient(q.gatewayAddress, grpc.WithTransportCredentials(insecure.NewCredentials())) // Renamed from qmtAddress
+	conn, connErr := grpc.NewClient(q.gatewayAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if connErr != nil {
 		// connErr is not returned because it is not a main error of this function
-		zap.L().Error(fmt.Sprintf("failed to make connection to %s/reason:%s", q.gatewayAddress, connErr)) // Renamed from qmtAddress
+		zap.L().Error(fmt.Sprintf("failed to make connection to %s/reason:%s", q.gatewayAddress, connErr))
 		return
 	}
-	q.gatewayConn = conn                             // Renamed from qmtConn
-	q.gatewayClient = qint.NewQpuServiceClient(conn) // Renamed from qmtClient
+	q.gatewayConn = conn
+	q.gatewayClient = qint.NewQpuServiceClient(conn)
 	q.lastDeviceInfo = nil
-	zap.L().Debug(fmt.Sprintf("GatewayAgent is ready to use %s", q.gatewayAddress)) // Renamed from QMTAgent, qmtAddress
+	zap.L().Debug(fmt.Sprintf("GatewayAgent is ready to use %s", q.gatewayAddress))
 	return
 }
 
-func (q *DefaultGatewayAgent) Close() { // Renamed from DefaultQMTAgent
-	if q.gatewayConn != nil { // Renamed from qmtConn
-		_ = q.gatewayConn.Close() // Renamed from qmtConn
+func (q *DefaultGatewayAgent) Close() {
+	if q.gatewayConn != nil {
+		_ = q.gatewayConn.Close()
 	}
 }
 
-func (q *DefaultGatewayAgent) GetAddress() string { // Renamed from DefaultQMTAgent
-	return q.gatewayAddress // Renamed from qmtAddress
+func (q *DefaultGatewayAgent) GetAddress() string {
+	return q.gatewayAddress
 }
 
-func (q *DefaultGatewayAgent) uploadDIOnChange(newDI *core.DeviceInfo) { // Renamed from DefaultQMTAgent
+func (q *DefaultGatewayAgent) uploadDIOnChange(newDI *core.DeviceInfo) {
 	// TODO: refactor this long function
 	updated := false
 	if q.lastDeviceInfo == nil || q.lastDeviceInfo.Status != newDI.Status {

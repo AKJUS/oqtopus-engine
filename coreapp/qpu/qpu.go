@@ -81,8 +81,8 @@ func successOrFailure() string {
 	return "dummy failure result"
 }
 
-type GatewayQPU struct { // Renamed from QMTQPU
-	agent             GatewayAgent // Renamed from QMTAgent
+type GatewayQPU struct {
+	agent             GatewayAgent
 	deviceSetting     *DeviceSetting
 	connected         bool
 	currentDeviceInfo *core.DeviceInfo
@@ -91,8 +91,8 @@ type GatewayQPU struct { // Renamed from QMTQPU
 	DummyQPUTime                int
 }
 
-func (q *GatewayQPU) Setup(conf *core.Conf) error { // Renamed from QMTQPU
-	zap.L().Debug("Setting up Gateway QPU") // Renamed from QMT
+func (q *GatewayQPU) Setup(conf *core.Conf) error {
+	zap.L().Debug("Setting up Gateway QPU")
 	q.EnableDummyQPUTimeInsertion = conf.EnableDummyQPUTimeInsertion
 	q.DummyQPUTime = conf.DummyQPUTime
 
@@ -104,13 +104,13 @@ func (q *GatewayQPU) Setup(conf *core.Conf) error { // Renamed from QMTQPU
 	}
 	switch ds.DeviceName {
 	case "wako", "handai":
-		q.agent = NewGatewayAgent()                                                // Renamed from NewQMTAgent
-		zap.L().Debug(fmt.Sprintf("Setting up Gateway QPU for %s", ds.DeviceName)) // Renamed from QMT
+		q.agent = NewGatewayAgent()
+		zap.L().Debug(fmt.Sprintf("Setting up Gateway QPU for %s", ds.DeviceName))
 	default:
 		return fmt.Errorf("unknown device name:%s", ds.DeviceName)
 	}
 	if err := q.agent.Setup(); err != nil {
-		zap.L().Error(fmt.Sprintf("failed to setup Gateway QPU/reason:%s", err)) // Renamed from QMT
+		zap.L().Error(fmt.Sprintf("failed to setup Gateway QPU/reason:%s", err))
 		return err
 	}
 	q.deviceSetting = ds
@@ -124,18 +124,18 @@ func (q *GatewayQPU) Setup(conf *core.Conf) error { // Renamed from QMTQPU
 	return nil
 }
 
-func (q *GatewayQPU) Validate(qasm string) error { // Renamed from QMTQPU
+func (q *GatewayQPU) Validate(qasm string) error {
 	return nil //adhoc
 	//return circuitValidate(qasm, q.deviceSetting)
 }
 
-func (q *GatewayQPU) Send(j core.Job) error { // Renamed from QMTQPU
+func (q *GatewayQPU) Send(j core.Job) error {
 	var err error
 	jd := j.JobData()
-	zap.L().Info("Starting Gateway QPU execution of Job ID:" + jd.ID) // Renamed from QMT
+	zap.L().Info("Starting Gateway QPU execution of Job ID:" + jd.ID)
 
 	if !q.GetConnected() {
-		err := fmt.Errorf("Gateway QPU is not connected") // Renamed from QMT
+		err := fmt.Errorf("Gateway QPU is not connected")
 		msg := core.SetFailureWithError(j, err)
 		zap.L().Info(msg)
 		return err
@@ -155,15 +155,15 @@ func (q *GatewayQPU) Send(j core.Job) error { // Renamed from QMTQPU
 	return nil
 }
 
-func (q *GatewayQPU) GetDeviceInfo() *core.DeviceInfo { // Renamed from QMTQPU
+func (q *GatewayQPU) GetDeviceInfo() *core.DeviceInfo {
 	return q.currentDeviceInfo
 }
 
-func (q *GatewayQPU) GetConnected() bool { // Renamed from QMTQPU
+func (q *GatewayQPU) GetConnected() bool {
 	return q.connected
 }
 
-func (q *GatewayQPU) startDevicePolling() { // Renamed from QMTQPU
+func (q *GatewayQPU) startDevicePolling() {
 	go func() {
 		t := time.NewTicker(time.Duration(q.deviceSetting.PollingPeriod) * time.Second)
 		zap.L().Debug("Starting Device Polling")
@@ -187,7 +187,7 @@ func (q *GatewayQPU) startDevicePolling() { // Renamed from QMTQPU
 }
 
 // TODO use run Group
-func (q *GatewayQPU) startCleanUpGoroutine(t *time.Ticker) { // Renamed from QMTQPU
+func (q *GatewayQPU) startCleanUpGoroutine(t *time.Ticker) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {

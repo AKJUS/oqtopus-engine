@@ -53,7 +53,7 @@ type Edge struct {
 type DIContainerParameters struct {
 	DBManager  string `long:"db" description:"db" default:"memory" choice:"memory" choice:"service" env:"QIQB_EDGE_DB_MANAGER_TYPE"`
 	Transpiler string `long:"transpiler" description:"transpiler-type" default:"pass" choice:"pass" choice:"grpc" choice:"tranqu" env:"QIQB_EDGE_TRANSPILER_TYPE"`
-	QPU        string `long:"qpu" description:"qpu-type" default:"dummy" choice:"dummy" choice:"it" choice:"gateway" env:"QIQB_EDGE_QPU_TYPE"` // Renamed choice:"qmt" to choice:"gateway"
+	QPU        string `long:"qpu" description:"qpu-type" default:"dummy" choice:"dummy" choice:"it" choice:"gateway" env:"QIQB_EDGE_QPU_TYPE"`
 	Scheduler  string `long:"scheduler" description:"scheduler-type" default:"normal" env:"QIQB_EDGE_SCHEDULER_TYPE"`
 }
 
@@ -86,8 +86,8 @@ func (e *Edge) provideDIContainer() (c *dig.Container, err error) {
 		switch e.DIContainerParameters.QPU {
 		case "dummy":
 			return &qpu.DummyQPU{}, nil
-		case "gateway": // Renamed from "qmt"
-			return &qpu.GatewayQPU{}, nil // Renamed from QMTQPU
+		case "gateway":
+			return &qpu.GatewayQPU{}, nil
 		default:
 			return &qpu.DummyQPU{}, fmt.Errorf("%s is an unknown QPU", e.DIContainerParameters.QPU)
 		}
@@ -240,7 +240,7 @@ func (c *pollerCmd) Execute(args []string) error {
 
 	// test
 	// TODO: remove
-	v, ok := core.GetComponentSetting("gateway") // Renamed from "qmt"
+	v, ok := core.GetComponentSetting("gateway")
 	if !ok {
 		zap.L().Error("failed to get setting")
 		return fmt.Errorf("failed to get setting")
@@ -319,7 +319,7 @@ func setupSystemComponents(conf *core.Conf) *core.SystemComponents {
 }
 
 func registerSetting() {
-	core.RegisterSetting("gateway", qpu.NewDefaultGatewayAgentSetting()) // Renamed from "qmt", NewDefaultQMTAgentSetting
+	core.RegisterSetting("gateway", qpu.NewDefaultGatewayAgentSetting())
 	core.RegisterSetting("tranqu", transpiler.NewTranquSetting())
 	core.RegisterSetting(estimation.ESTIMATION_SETTING_KEY, estimation.NewEstimationSetting())
 }

@@ -18,11 +18,11 @@ const testQASM = "OPENQASM 3;qubit[1] q;bit[1] c;x q[0];c[0] = measure q[0];"
 const testTranspiledQASM = "OPENQASM 3.0;include \"stdgates.inc\";qreg q[64];creg c[64];" +
 	"x q[0];c[0] = measure q[0];"
 
-func TestGatewayQPUSend(t *testing.T) { // Renamed from TestQMTQPUSend
+func TestGatewayQPUSend(t *testing.T) {
 	tests := []struct {
 		name                string
 		connected           bool
-		agent               GatewayAgent // Renamed from QMTAgent
+		agent               GatewayAgent
 		jobID               string
 		inputQASM           string
 		transpiledInputQASM string
@@ -33,17 +33,17 @@ func TestGatewayQPUSend(t *testing.T) { // Renamed from TestQMTQPUSend
 		{
 			name:        "unconnected failure",
 			connected:   false,
-			agent:       &MockGatewayAgent{}, // Renamed from MockQMTAgent
+			agent:       &MockGatewayAgent{},
 			jobID:       "test_unconnected_failure",
 			sentToQPU:   false,
 			inputQASM:   testQASM,
-			wantMessage: "Gateway QPU is not connected",                     // Renamed from QMT
-			wantErr:     regexp.MustCompile("Gateway QPU is not connected"), // Renamed from QMT
+			wantMessage: "Gateway QPU is not connected",
+			wantErr:     regexp.MustCompile("Gateway QPU is not connected"),
 		},
 		{
 			name:        "call job failure",
 			connected:   true,
-			agent:       &MockGatewayAgentError{}, // Renamed from MockQMTAgentError
+			agent:       &MockGatewayAgentError{},
 			jobID:       "test_call_job_failure",
 			sentToQPU:   true,
 			inputQASM:   testQASM,
@@ -52,7 +52,7 @@ func TestGatewayQPUSend(t *testing.T) { // Renamed from TestQMTQPUSend
 		},
 	}
 	core.ResetSetting()
-	core.RegisterSetting("gateway", NewDefaultGatewayAgentSetting()) // Renamed from "qmt", NewDefaultQMTAgentSetting
+	core.RegisterSetting("gateway", NewDefaultGatewayAgentSetting())
 
 	s := core.SCWithUnimplementedContainer()
 	defer s.TearDown()
@@ -68,11 +68,11 @@ func TestGatewayQPUSend(t *testing.T) { // Renamed from TestQMTQPUSend
 				DeviceSettingPath:         dsPath,
 				DisableStartDevicePolling: true,
 			}
-			gatewayQPU := &GatewayQPU{}        // Renamed from QMTQPU
-			setupErr := gatewayQPU.Setup(conf) // Renamed from qmtQPU
+			gatewayQPU := &GatewayQPU{}
+			setupErr := gatewayQPU.Setup(conf)
 			assert.Nil(t, setupErr)
-			gatewayQPU.agent = tt.agent         // Renamed from qmtQPU
-			gatewayQPU.connected = tt.connected // Renamed from qmtQPU
+			gatewayQPU.agent = tt.agent
+			gatewayQPU.connected = tt.connected
 
 			jd := core.NewJobData()
 			jd.ID = tt.jobID
@@ -85,7 +85,7 @@ func TestGatewayQPUSend(t *testing.T) { // Renamed from TestQMTQPUSend
 			nj, err := jm.NewJobFromJobData(jd, jc)
 			assert.Nil(t, err)
 
-			sendErr := gatewayQPU.Send(nj) // Renamed from qmtQPU
+			sendErr := gatewayQPU.Send(nj)
 			if sendErr != nil {
 				assert.Regexp(t, tt.wantErr, sendErr)
 			}
@@ -96,35 +96,35 @@ func TestGatewayQPUSend(t *testing.T) { // Renamed from TestQMTQPUSend
 	}
 }
 
-type MockGatewayAgent struct{} // Renamed from MockQMTAgent
+type MockGatewayAgent struct{}
 
-func (m *MockGatewayAgent) Setup() error { // Renamed from MockQMTAgent
+func (m *MockGatewayAgent) Setup() error {
 	return nil
 }
 
-func (m *MockGatewayAgent) CallJob(j core.Job) error { // Renamed from MockQMTAgent
+func (m *MockGatewayAgent) CallJob(j core.Job) error {
 	return nil
 }
 
-func (m *MockGatewayAgent) CallDeviceInfo() (*core.DeviceInfo, error) { // Renamed from MockQMTAgent
+func (m *MockGatewayAgent) CallDeviceInfo() (*core.DeviceInfo, error) {
 	return &core.DeviceInfo{
-		DeviceName: "mock_gateway_client", // Renamed from "mock_qmt_client"
+		DeviceName: "mock_gateway_client",
 	}, nil
 }
 
-func (m *MockGatewayAgent) Reset() {} // Renamed from MockQMTAgent
+func (m *MockGatewayAgent) Reset() {}
 
-func (m *MockGatewayAgent) Close() {} // Renamed from MockQMTAgent
+func (m *MockGatewayAgent) Close() {}
 
-func (m *MockGatewayAgent) GetAddress() string { // Renamed from MockQMTAgent
+func (m *MockGatewayAgent) GetAddress() string {
 	return "dummy_address"
 }
 
-type MockGatewayAgentError struct { // Renamed from MockQMTAgentError
-	MockGatewayAgent // Renamed from MockQMTAgent
+type MockGatewayAgentError struct {
+	MockGatewayAgent
 }
 
-func (m *MockGatewayAgentError) CallJob(j core.Job) error { // Renamed from MockQMTAgentError
+func (m *MockGatewayAgentError) CallJob(j core.Job) error {
 	jd := j.JobData()
 	jd.Result.Message = "failed to call job"
 	return nil

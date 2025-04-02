@@ -179,7 +179,7 @@ type DBManager interface {
 	ExistInInnerJobIDSet(string) bool
 }
 
-type SSEGatewayRouter interface { // Renamed from SSEQMTRouter
+type SSEGatewayRouter interface {
 	Setup(*dig.Container) error
 	TearDown()
 }
@@ -241,7 +241,7 @@ func (s *SystemComponents) Setup(conf *Conf) error {
 
 	zap.L().Debug("Setting up SSE Server")
 	err = s.Invoke(
-		func(sqr SSEGatewayRouter) error { // Renamed from SSEQMTRouter
+		func(sqr SSEGatewayRouter) error {
 			return sqr.Setup(s.Container)
 		})
 	if err != nil {
@@ -258,7 +258,7 @@ func (s *SystemComponents) TearDown() {
 		})
 
 	_ = s.Invoke(
-		func(t SSEGatewayRouter) { // Renamed from SSEQMTRouter
+		func(t SSEGatewayRouter) {
 			t.TearDown()
 		})
 	s.Channels.Close()

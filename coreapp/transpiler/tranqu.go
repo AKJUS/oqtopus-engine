@@ -76,7 +76,7 @@ func (t *Tranqu) Setup(_ *core.Conf) error {
 	t.ctx = context.Background()
 	t.conn = conn
 	t.client = tranqu.NewTranspilerServiceClient(conn)
-	zap.L().Debug(fmt.Sprintf("GatewayAgent is ready to use %s", t.address)) // Renamed from QMTAgent
+	zap.L().Debug(fmt.Sprintf("GatewayAgent is ready to use %s", t.address))
 	return nil
 }
 
