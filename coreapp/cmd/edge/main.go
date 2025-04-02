@@ -123,7 +123,7 @@ func (e *Edge) provideDIContainer() (c *dig.Container, err error) {
 	if err != nil {
 		return &dig.Container{}, err
 	}
-	err = c.Provide(func() (core.SSEGatewayRouter, error) { // Already Renamed from core.SSEQMTRouter
+	err = c.Provide(func() (core.SSEGatewayRouter, error) {
 		return &router.SSEGRPCServer{}, nil
 	})
 	if err != nil {
