@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/oqtopus-team/oqtopus-engine/coreapp/common"
 	"github.com/oqtopus-team/oqtopus-engine/coreapp/core"
 	tranqu "github.com/oqtopus-team/oqtopus-engine/coreapp/gen/tranqu/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"strconv"
-	"time"
 )
 
 const grpcTimeout time.Duration = 5 * time.Second
@@ -75,7 +76,7 @@ func (t *Tranqu) Setup(_ *core.Conf) error {
 	t.ctx = context.Background()
 	t.conn = conn
 	t.client = tranqu.NewTranspilerServiceClient(conn)
-	zap.L().Debug(fmt.Sprintf("QMTAgent is ready to use %s", t.address))
+	zap.L().Debug(fmt.Sprintf("GatewayAgent is ready to use %s", t.address))
 	return nil
 }
 

@@ -53,16 +53,16 @@ type ResultFileContentsResultSampling struct {
 }
 
 type ContainerDefinition struct {
-	containerName string
-	config        *container.Config
-	client        client.ContainerAPIClient
-	volumeClient  client.VolumeAPIClient
-	ID            string
-	volume        volume.Volume
-	qmtRouterHost string
+	containerName     string
+	config            *container.Config
+	client            client.ContainerAPIClient
+	volumeClient      client.VolumeAPIClient
+	ID                string
+	volume            volume.Volume
+	gatewayRouterHost string
 }
 
-func (c *ContainerDefinition) Setup(containerName string, envVars []string, containerImageName string, qmtRouterHostName string) (err error) {
+func (c *ContainerDefinition) Setup(containerName string, envVars []string, containerImageName string, gatewayRouterHostName string) (err error) {
 	// Define the container name and error message
 	c.containerName = containerName
 
@@ -84,7 +84,7 @@ func (c *ContainerDefinition) Setup(containerName string, envVars []string, cont
 	c.client = apiClient
 	c.volumeClient = apiClient
 
-	c.qmtRouterHost = qmtRouterHostName
+	c.gatewayRouterHost = gatewayRouterHostName
 	return nil
 }
 
@@ -119,10 +119,10 @@ func RunSSE(j core.Job) error {
 		"JOB_DATA_JSON=" + outputJobJson,
 		"IN_PATH=" + sseconf.ContainerPathIn,
 		"OUT_PATH=" + sseconf.ContainerPathOut,
-		"GRPC_SSE_QMT_ROUTER_HOST=" + sseconf.QmtRouterLookupHost,
-		"GRPC_SSE_QMT_ROUTER_PORT=" + fmt.Sprintf("%d", sseconf.QmtRouterListenPort),
+		"GRPC_SSE_GATEWAY_ROUTER_HOST=" + sseconf.GatewayRouterLookupHost,
+		"GRPC_SSE_GATEWAY_ROUTER_PORT=" + fmt.Sprintf("%d", sseconf.GatewayRouterListenPort),
 	}
-	err = conDef.Setup(jd.ID, envVars, sseconf.ContainerImage, sseconf.QmtRouterLookupHost)
+	err = conDef.Setup(jd.ID, envVars, sseconf.ContainerImage, sseconf.GatewayRouterLookupHost)
 	if err != nil {
 		err = errBeforeContainerMake(jd.ID, sseconf.HostPath, err)
 		return err
@@ -143,7 +143,7 @@ func RunSSE(j core.Job) error {
 	conDef.SetID(containerID)
 
 	// Initialize directories and permmissions and setup iptables in container
-	cmdString := fmt.Sprintf("sh -c \"/root/init.sh %d\"", sseconf.QmtRouterListenPort)
+	cmdString := fmt.Sprintf("sh -c \"/root/init.sh %d\"", sseconf.GatewayRouterListenPort)
 	err, _ = execCommandInContainer(&conDef, jd, sseconf, "root", true, cmdString)
 	if err != nil {
 		errAfterContainerMake(jd.ID, err, &conDef, sseconf.HostPath)
@@ -279,7 +279,7 @@ func startContainer(conDef *ContainerDefinition, sseconf *conf.SSEConf) (contain
 	// Generate container
 	mountPoint := fmt.Sprintf("%s:/sse", conDef.volume.Name)
 	hostConfig := &container.HostConfig{
-		ExtraHosts: []string{fmt.Sprintf("%s:host-gateway", conDef.qmtRouterHost)},
+		ExtraHosts: []string{fmt.Sprintf("%s:host-gateway", conDef.gatewayRouterHost)},
 		Resources:  container.Resources{Memory: sseconf.ContainerMemory, CpusetCpus: sseconf.ContainerCPUSet},
 		Binds:      []string{mountPoint}}
 	containerCreateResp, err := conDef.client.ContainerCreate(context.Background(), conDef.config, hostConfig, nil, nil, conDef.containerName)

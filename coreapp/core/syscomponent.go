@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/go-faster/jx"
 
 	"go.uber.org/dig"
@@ -178,7 +179,7 @@ type DBManager interface {
 	ExistInInnerJobIDSet(string) bool
 }
 
-type SSEQMTRouter interface {
+type SSEGatewayRouter interface {
 	Setup(*dig.Container) error
 	TearDown()
 }
@@ -240,7 +241,7 @@ func (s *SystemComponents) Setup(conf *Conf) error {
 
 	zap.L().Debug("Setting up SSE Server")
 	err = s.Invoke(
-		func(sqr SSEQMTRouter) error {
+		func(sqr SSEGatewayRouter) error {
 			return sqr.Setup(s.Container)
 		})
 	if err != nil {
@@ -257,7 +258,7 @@ func (s *SystemComponents) TearDown() {
 		})
 
 	_ = s.Invoke(
-		func(t SSEQMTRouter) {
+		func(t SSEGatewayRouter) {
 			t.TearDown()
 		})
 	s.Channels.Close()

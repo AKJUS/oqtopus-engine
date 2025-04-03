@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO: remove DeviceSetting, instead use DefaultQMTAgentSetting
+// TODO: remove DeviceSetting, instead use DefaultGatewayAgentSetting
 type DeviceSetting struct {
 	DeviceName    string       `toml:"device_name"`
 	DeviceType    string       `toml:"device_type"`

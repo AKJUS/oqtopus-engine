@@ -20,24 +20,24 @@ func init() {
 }
 
 type SSEConf struct {
-	ContainerImage      string `long:"sse-container-image" description:"name of container image for SSE" default:"sse/python3.11.6:latest" env:"SSE_CONTAINER_IMAGE"`
-	ContainerPathIn     string `long:"sse-container-path-input" description:"The path to the folder where the input data will be placed in SSE container" default:"/sse/in" env:"SSE_CONTAINER_PATH_INPUT"`
-	ContainerPathOut    string `long:"sse-container-path-output" description:"The path to the folder where the output data will be placed in SSE container" default:"/sse/out" env:"SSE_CONTAINER_PATH_OUTPUT"`
-	ContainerMemory     int64  `long:"sse-container-memory" description:"The memory size of the SSE container in bytes" default:"1073741824" env:"SSE_CONTAINER_MEMORY"`
-	ContainerCPUSet     string `long:"sse-container-cpuset" description:"CPUs in which to allow execution in the SSE container" default:"0" env:"SSE_CONTAINER_CPUSET"`
-	ContainerDiskQuota  int64  `long:"sse-container-disk-quota" description:"The disk quota for the SSE container" default:"314572800" env:"SSE_CONTAINER_DISK_QUOTA"`
-	HostPath            string `long:"sse-host-path" description:"The path to the folder where the input and output data for SSE container" default:"/home/example/sse/" env:"SSE_HOST_PATH"`
-	HostPathIn          string `long:"sse-host-path-input" description:"The path to the folder that contains the data to be placed in the SSE container" default:"/in" env:"SSE_HOST_PATH_INPUT"`
-	HostPathOut         string `long:"sse-host-path-output" description:"The path to the folder that contains the data to be retrieved from the SSE container" default:"/out" env:"SSE_HOST_PATH_OUTPUT"`
-	SSELambdaEndpoint   string `long:"sse-lambda-endpoint" description:"Lambda endpoint" default:"http://localhost" env:"SSE_LAMBDA_ENDPOINT"`
-	SSEResultFileName   string `long:"sse-result-file-name" description:"The name of the SSE result file to be uploaded to S3" default:"result.json" env:"SSE_RESULT_NAME"`
-	SSELogFileName      string `long:"sse-log-file-name" description:"The name of the SSE log file to be uploaded to S3" default:"ssecontainer.log" env:"SSE_LOG_NAME"`
-	TimeoutSSE          int    `long:"timeout-sse" description:"SSE container timeout period in seconds" default:"300" env:"SSE_TIMEOUT"`
-	MaxFileSize         int64  `long:"sse-max-file-size" description:"Max file size for API Gateway" default:"10485760" env:"SSE_APIGATEWAY_MAX_SIZE_IN_BYTE"`
-	UserProgramName     string `long:"sse-user-program-name" description:"The name of the file that runs inside the SSE container" default:"userprogram.py" env:"SSE_USER_PROGRAM_NAME"`
-	QmtRouterListenHost string `long:"sse-qmt-router-listen-host" description:"listening host address or name of gRPC server" default:"0.0.0.0" env:"SSE_QMT_ROUTER_LISTEN_HOST"`
-	QmtRouterListenPort int32  `long:"sse-qmt-router-listen-port" description:"listening port number of gRPC server" default:"5001" env:"SSE_QMT_ROUTER_LISTEN_PORT"`
-	QmtRouterLookupHost string `long:"sse-qmt-router-lookup-host" description:"host address or name of gRPC server used to access from container" default:"sse.qmt.router" env:"SSE_QMT_ROUTER_LOOKUP_HOST"`
+	ContainerImage          string `long:"sse-container-image" description:"name of container image for SSE" default:"sse/python3.11.6:latest" env:"SSE_CONTAINER_IMAGE"`
+	ContainerPathIn         string `long:"sse-container-path-input" description:"The path to the folder where the input data will be placed in SSE container" default:"/sse/in" env:"SSE_CONTAINER_PATH_INPUT"`
+	ContainerPathOut        string `long:"sse-container-path-output" description:"The path to the folder where the output data will be placed in SSE container" default:"/sse/out" env:"SSE_CONTAINER_PATH_OUTPUT"`
+	ContainerMemory         int64  `long:"sse-container-memory" description:"The memory size of the SSE container in bytes" default:"1073741824" env:"SSE_CONTAINER_MEMORY"`
+	ContainerCPUSet         string `long:"sse-container-cpuset" description:"CPUs in which to allow execution in the SSE container" default:"0" env:"SSE_CONTAINER_CPUSET"`
+	ContainerDiskQuota      int64  `long:"sse-container-disk-quota" description:"The disk quota for the SSE container" default:"314572800" env:"SSE_CONTAINER_DISK_QUOTA"`
+	HostPath                string `long:"sse-host-path" description:"The path to the folder where the input and output data for SSE container" default:"/home/example/sse/" env:"SSE_HOST_PATH"`
+	HostPathIn              string `long:"sse-host-path-input" description:"The path to the folder that contains the data to be placed in the SSE container" default:"/in" env:"SSE_HOST_PATH_INPUT"`
+	HostPathOut             string `long:"sse-host-path-output" description:"The path to the folder that contains the data to be retrieved from the SSE container" default:"/out" env:"SSE_HOST_PATH_OUTPUT"`
+	SSELambdaEndpoint       string `long:"sse-lambda-endpoint" description:"Lambda endpoint" default:"http://localhost" env:"SSE_LAMBDA_ENDPOINT"`
+	SSEResultFileName       string `long:"sse-result-file-name" description:"The name of the SSE result file to be uploaded to S3" default:"result.json" env:"SSE_RESULT_NAME"`
+	SSELogFileName          string `long:"sse-log-file-name" description:"The name of the SSE log file to be uploaded to S3" default:"ssecontainer.log" env:"SSE_LOG_NAME"`
+	TimeoutSSE              int    `long:"timeout-sse" description:"SSE container timeout period in seconds" default:"300" env:"SSE_TIMEOUT"`
+	MaxFileSize             int64  `long:"sse-max-file-size" description:"Max file size for API Gateway" default:"10485760" env:"SSE_APIGATEWAY_MAX_SIZE_IN_BYTE"`
+	UserProgramName         string `long:"sse-user-program-name" description:"The name of the file that runs inside the SSE container" default:"userprogram.py" env:"SSE_USER_PROGRAM_NAME"`
+	GatewayRouterListenHost string `long:"sse-gateway-router-listen-host" description:"listening host address or name of gRPC server" default:"0.0.0.0" env:"SSE_GATEWAY_ROUTER_LISTEN_HOST"`
+	GatewayRouterListenPort int32  `long:"sse-gateway-router-listen-port" description:"listening port number of gRPC server" default:"5001" env:"SSE_GATEWAY_ROUTER_LISTEN_PORT"`
+	GatewayRouterLookupHost string `long:"sse-gateway-router-lookup-host" description:"host address or name of gRPC server used to access from container" default:"sse.gateway.router" env:"SSE_GATEWAY_ROUTER_LOOKUP_HOST"`
 }
 
 func loadParams() (code int, err error) {

@@ -136,8 +136,8 @@ func (m *GRPCRouter) TranspileAndExec(ctx context.Context, userReq *sse.Transpil
 	res.TranspiledQasm = jd.TranspiledQASM
 
 	// QPU SECTION START
-	zap.L().Info(fmt.Sprintf("Start calling qmt for SSE, JobID:%s", jd.ID))
-	// Call qmt qpu
+	zap.L().Info(fmt.Sprintf("Start calling QPU for SSE, JobID:%s", jd.ID))
+	// Call QPU
 	err = m.container.Invoke(
 		func(q core.QPUManager) error {
 			err = q.Send(j)
@@ -278,7 +278,7 @@ type SSEGRPCServer struct {
 
 func (m *SSEGRPCServer) Setup(container *dig.Container) error {
 	sconf := sseconf.GetSSEConf()
-	url := net.JoinHostPort(sconf.QmtRouterListenHost, fmt.Sprintf("%d", sconf.QmtRouterListenPort))
+	url := net.JoinHostPort(sconf.GatewayRouterListenHost, fmt.Sprintf("%d", sconf.GatewayRouterListenPort))
 
 	// start gRPC server
 	zap.L().Info(fmt.Sprintf("Starting up gRPC server. Listening on %s", url))

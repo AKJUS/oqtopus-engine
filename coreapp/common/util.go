@@ -14,6 +14,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	api "github.com/oqtopus-team/oqtopus-engine/coreapp/oas/gen/providerapi" // Added import for api package
 )
 
 func GetAssetAbsPath(fileName string) (string, error) {
@@ -49,6 +51,38 @@ func ReadFile(filepath string) (string, error) {
 	}
 	return string(bytes), nil
 }
+
+// --- API Client Utilities ---
+
+// SecuritySource provides API key authentication for the generated OpenAPI client.
+type SecuritySource struct {
+	apiKey string
+}
+
+// ApiKeyAuth implements the api.SecuritySource interface.
+func (p SecuritySource) ApiKeyAuth(ctx context.Context, name string) (api.ApiKeyAuth, error) {
+	apiKeyAuth := api.ApiKeyAuth{}
+	apiKeyAuth.SetAPIKey(p.apiKey)
+	return apiKeyAuth, nil
+}
+
+// NewAPIClient creates a new OpenAPI client with the given endpoint and API key.
+// It uses the SecuritySource for authentication.
+func NewAPIClient(endpoint, apiKey string) (*api.Client, error) {
+	ss := SecuritySource{apiKey: apiKey}
+	// Ensure the endpoint starts with https://
+	if !strings.HasPrefix(endpoint, "https://") && !strings.HasPrefix(endpoint, "http://") {
+		endpoint = "https://" + endpoint
+	}
+	cli, err := api.NewClient(endpoint, ss)
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("failed to create a new API client/endpoint:%s/reason:%s", endpoint, err))
+		return nil, err
+	}
+	return cli, nil
+}
+
+// --- End API Client Utilities ---
 
 // TODO optimize
 func ContainsStatementName(s string, list []string) bool {
