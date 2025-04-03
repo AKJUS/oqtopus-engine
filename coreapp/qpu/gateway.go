@@ -208,7 +208,6 @@ func (q *DefaultGatewayAgent) GetAddress() string {
 }
 
 func (q *DefaultGatewayAgent) uploadDIOnChange(newDI *core.DeviceInfo) {
-	// TODO: refactor this long function
 	updated := false
 	if hasStatusChanged(q.lastDeviceInfo, newDI) {
 		if err := q.updateDeviceStatus(newDI.Status); err != nil {
