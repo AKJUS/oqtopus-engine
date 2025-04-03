@@ -3,13 +3,14 @@ dotenv: ['.env']
 vars:
   MAIN_PKG: "cmd/edge/main.go"
   BIN_DIR: "./bin"
-  OAS_DIR: "./oas"
   CORE_APP_BIN_NAME: "engine"
+  GIT_VERSION:
+    sh: git describe --tags --always --dirty
 tasks:
   build:
     desc: "Build engine"
     cmds:
-      - go build -o {{.CORE_APP_BIN_NAME}} -ldflags "-X main.versionByBuildFlag={{.CLI_ARGS | default "no_version"}}" {{.MAIN_PKG}}
+      - go build -o {{.CORE_APP_BIN_NAME}} -ldflags "-X main.versionByBuildFlag={{.GIT_VERSION}}" {{.MAIN_PKG}}
   start:
     desc: "Start engine"
     vars:
@@ -17,7 +18,7 @@ tasks:
         SP: '{{.SETTING_PATH | default "./setting/setting.toml"}}'
     cmds:
       - >
-        bash -c 'nohup ./{{.CORE_APP_BIN_NAME}} poller --log-level=debug --qpu=qmt
+        bash -c 'nohup ./{{.CORE_APP_BIN_NAME}} poller --log-level=debug --qpu=gateway
         --transpiler=tranqu --setting-path={{.SP}}
         --db=service --enable-file-log --log-dir={{.LD}} --dev-mode
         --device-setting-path=./setting/device_setting.toml >/dev/null 2>&1 & echo $! > ./engine.pid'
@@ -28,7 +29,7 @@ tasks:
         SP: '{{.SETTING_PATH | default "./setting/setting.toml"}}'
     cmds:
       - >
-        bash -c './{{.CORE_APP_BIN_NAME}} poller --log-level=debug --qpu=qmt
+        bash -c './{{.CORE_APP_BIN_NAME}} poller --log-level=debug --qpu=gateway
         --transpiler=tranqu --setting-path={{.SP}}
         --db=service --enable-file-log --log-dir={{.LD}} --dev-mode
         --device-setting-path=./setting/device_setting.toml'
@@ -39,7 +40,8 @@ tasks:
       SP: '{{.SETTING_PATH | default "./setting/setting.toml"}}'
     cmds:
       - >
-        go run {{.MAIN_PKG}} poller --log-level=debug --qpu=qmt --db=service --transpiler=tranqu --setting-path={{.SP}}
+        go run {{.MAIN_PKG}} poller --log-level=debug --qpu=gateway --db=service --transpiler=tranqu --setting-path={{.SP}}
+        --version={{.GIT_VERSION}}
         --enable-file-log --log-dir={{.LD}} --dev-mode --device-setting-path=./setting/device_setting.toml
   build-start:
     desc: "Build And engine in coop environment"
@@ -51,6 +53,7 @@ tasks:
       - task: start
   stop:
     desc: "Gracefully stop the running engine process (SIGINT)"
+    silent: true
     cmds:
       - |
         if [ -f ./engine.pid ]; then
@@ -58,6 +61,17 @@ tasks:
           echo "Sending SIGINT to engine process (PID: $PID)"
           kill -2 $PID
           rm ./engine.pid
+        else
+          echo "No engine.pid file found. Is engine running?"
+        fi
+  check:
+    desc: "Check the engine process status"
+    silent: true
+    cmds:
+      - |
+        if [ -f ./engine.pid ]; then
+          PID=$(cat ./engine.pid)
+          echo "Engine process is running (PID: $PID)"
         else
           echo "No engine.pid file found. Is engine running?"
         fi
@@ -78,5 +92,4 @@ tasks:
       - go run {{.MAIN_PKG}} poller --help
 includes:
   oas:
-    taskfile: "{{.OAS_DIR}}/Taskfile.yml"
-    dir: "{{.OAS_DIR}}"
+    taskfile: "oas/Taskfile.yml"

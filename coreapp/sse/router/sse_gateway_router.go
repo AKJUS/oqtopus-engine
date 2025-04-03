@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/oqtopus-team/oqtopus-engine/coreapp/core"
-	"github.com/oqtopus-team/oqtopus-engine/coreapp/oas"
 	ssep "github.com/oqtopus-team/oqtopus-engine/coreapp/sse"
 	sseconf "github.com/oqtopus-team/oqtopus-engine/coreapp/sse/conf"
 	sse "github.com/oqtopus-team/oqtopus-engine/coreapp/sse/sse_interface/v1"
@@ -30,6 +30,21 @@ type UserReqData struct {
 	Transpiler *core.TranspilerConfig `json:"transpiler_info,omitempty"`
 }
 
+type Result struct {
+	Counts         core.Counts        `json:"counts"`
+	DividedResult  core.DividedResult `json:"divided_result"`
+	TranspilerInfo TranspilerInfo     `json:"transpiler_info"`
+	Estimation     core.Estimation    `json:"estimation"`
+	Message        string             `json:"message"`
+	ExecutionTime  time.Duration      `json:"execution_time"`
+}
+
+type TranspilerInfo struct {
+	Stats                  string `json:"stats"`
+	VirtualPhysicalMapping string `json:"virtual_physical_mapping"`
+}
+
+// TODO: too long, split this function
 func (m *GRPCRouter) TranspileAndExec(ctx context.Context, userReq *sse.TranspileAndExecRequest) (*sse.TranspileAndExecResponse, error) {
 	zap.L().Info("Received gRPC request of transpiling and executing QPU")
 	zap.L().Debug(fmt.Sprintf("Received request: %+v", userReq))
@@ -42,6 +57,7 @@ func (m *GRPCRouter) TranspileAndExec(ctx context.Context, userReq *sse.Transpil
 		err := fmt.Errorf("Invalid request. Reason: JobDataJson is empty")
 		zap.L().Error(err.Error())
 		res.Message = "Invalid request. The request data for transpiling is empty."
+		zap.L().Debug(fmt.Sprintf("Response: %+v", res))
 		return res, nil
 	}
 	zap.L().Debug(fmt.Sprintf("Received JobDataJson: %s", JobDataJson))
@@ -51,6 +67,7 @@ func (m *GRPCRouter) TranspileAndExec(ctx context.Context, userReq *sse.Transpil
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("Failed to convert JSON to JobData. Reason:%s", err))
 		res.Message = "Invalid request data for transpiling."
+		zap.L().Debug(fmt.Sprintf("Response: %+v", res))
 		return res, nil
 	}
 	jd := j.JobData()
@@ -64,6 +81,7 @@ func (m *GRPCRouter) TranspileAndExec(ctx context.Context, userReq *sse.Transpil
 	if err != nil {
 		zap.L().Info(fmt.Sprintf("Invalid shots. Reason:%s", err))
 		res.Message = fmt.Sprintf("Invalid shots: %s", err)
+		zap.L().Debug(fmt.Sprintf("Response: %+v", res))
 		return res, nil
 	}
 
@@ -75,12 +93,22 @@ func (m *GRPCRouter) TranspileAndExec(ctx context.Context, userReq *sse.Transpil
 	if err != nil {
 		zap.L().Info(fmt.Sprintf("Invalid QASM. Reason:%s", err))
 		res.Message = fmt.Sprintf("Invalid QASM: %s", err)
+		zap.L().Debug(fmt.Sprintf("Response: %+v", res))
 		return res, nil
 	}
 
+	// TRANSPILE SECTION START
 	if jd.Transpiler == nil || useDefaultTranspiler(JobDataJson) {
-		jd.Transpiler = oas.DEFAULT_TRANSPILER_CONFIG()
+		jd.Transpiler = core.DEFAULT_TRANSPILER_CONFIG()
 	}
+	// Set the transpiler info to response
+	transpilerJson, err := json.Marshal(jd.Transpiler)
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("Failed to marshal transpiler info. Reason:%s", err))
+	} else {
+		res.TranspilerInfo = string(transpilerJson)
+	}
+
 	if jd.Transpiler.NeedTranspiling() {
 		zap.L().Info(fmt.Sprintf("Start transpiling for SSE, JobID:%s", jd.ID))
 		// Transpile the quantum circuit
@@ -91,19 +119,25 @@ func (m *GRPCRouter) TranspileAndExec(ctx context.Context, userReq *sse.Transpil
 		if err != nil {
 			zap.L().Error(fmt.Sprintf("Failed to transpile the quantum circuit. Reason:%s", err))
 			res.Message = fmt.Sprintf("Failed to transpile: %s", err)
+			zap.L().Debug(fmt.Sprintf("Response: %+v", res))
 			return res, nil
 		}
 		if j.JobData().Status == core.FAILED {
 			zap.L().Error("The result status of transpiler is FAILED")
-			res.Message = fmt.Sprintf("Failed to transpile: %s", err)
+			res.Message = fmt.Sprintf("Failed to transpile")
+			zap.L().Debug(fmt.Sprintf("Response: %+v", res))
 			return res, nil
 		}
 	} else {
 		zap.L().Info(fmt.Sprintf("Skip transpiling for SSE, JobID:%s", jd.ID))
 	}
 
-	zap.L().Info(fmt.Sprintf("Start calling qmt for SSE, JobID:%s", jd.ID))
-	// Call qmt qpu
+	// Set the transpiled QASM to response
+	res.TranspiledQasm = jd.TranspiledQASM
+
+	// QPU SECTION START
+	zap.L().Info(fmt.Sprintf("Start calling QPU for SSE, JobID:%s", jd.ID))
+	// Call QPU
 	err = m.container.Invoke(
 		func(q core.QPUManager) error {
 			err = q.Send(j)
@@ -114,20 +148,48 @@ func (m *GRPCRouter) TranspileAndExec(ctx context.Context, userReq *sse.Transpil
 		res.Message = "Failed to execute qpu"
 		return res, nil
 	}
-
-	// Set the response
-	transpilerJson, err := json.Marshal(jd.Transpiler)
-	if err != nil {
-		zap.L().Error(fmt.Sprintf("Failed to marshal transpiler info. Reason:%s", err))
-	} else {
-		res.TranspilerInfo = string(transpilerJson)
+	if j.JobData().Status == core.FAILED {
+		zap.L().Error("The result status of QPU is FAILED")
+		res.Message = fmt.Sprintf("Failed to execute qpu")
+		return res, nil
 	}
-	res.TranspiledQasm = jd.TranspiledQASM
+
 	if jd.Result != nil {
-		res.Result = jd.Result.ToString()
-	}
-	res.Status = core.SUCCEEDED.String()
+		// convert json.RawMessage to string
+		stats := json.RawMessage("{}")
+		if len(jd.Result.TranspilerInfo.StatsRaw) != 0 {
+			stats, err = json.RawMessage(jd.Result.TranspilerInfo.StatsRaw).MarshalJSON()
+			if err != nil {
+				zap.L().Error(fmt.Sprintf("Failed to marshal stats. Reason:%s", err))
+			}
+		}
+		vpMap := json.RawMessage("{}")
+		if len(jd.Result.TranspilerInfo.VirtualPhysicalMappingRaw) != 0 {
+			vpMap, err = json.RawMessage(jd.Result.TranspilerInfo.VirtualPhysicalMappingRaw).MarshalJSON()
+			if err != nil {
+				zap.L().Error(fmt.Sprintf("Failed to marshal virtual physical mapping. Reason:%s", err))
+			}
+		}
 
+		transpiler_info := TranspilerInfo{
+			Stats:                  string(stats),
+			VirtualPhysicalMapping: string(vpMap),
+		}
+		result := Result{
+			Counts:         jd.Result.Counts,
+			TranspilerInfo: transpiler_info,
+			Message:        jd.Result.Message,
+		}
+		resultStr, err := json.Marshal(result)
+		if err != nil {
+			zap.L().Error(fmt.Sprintf("Failed to marshal result. Reason:%s, message: %s", err, j.JobData().Result.Message))
+			res.Message = fmt.Sprintf("Failed to marshal result")
+			return res, nil
+		}
+		res.Result = string(resultStr)
+		res.Message = j.JobData().Result.Message
+	}
+	res.Status = j.JobData().Status.String()
 	zap.L().Info(fmt.Sprintf("Succeeded to transpile and execute for SSE, JobID:%s", jd.ID))
 	zap.L().Debug(fmt.Sprintf("Response: %+v", res))
 	return res, nil
@@ -216,7 +278,7 @@ type SSEGRPCServer struct {
 
 func (m *SSEGRPCServer) Setup(container *dig.Container) error {
 	sconf := sseconf.GetSSEConf()
-	url := net.JoinHostPort(sconf.QmtRouterListenHost, fmt.Sprintf("%d", sconf.QmtRouterListenPort))
+	url := net.JoinHostPort(sconf.GatewayRouterListenHost, fmt.Sprintf("%d", sconf.GatewayRouterListenPort))
 
 	// start gRPC server
 	zap.L().Info(fmt.Sprintf("Starting up gRPC server. Listening on %s", url))

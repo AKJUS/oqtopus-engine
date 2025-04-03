@@ -35,10 +35,10 @@ def req_transpile_and_exec(
 
     """
     # get gRPC server address and port from environment variables
-    grpc_sse_qmt_router_host = os.environ.get("GRPC_SSE_QMT_ROUTER_HOST",
-                                              "sse.qmt.router")
-    grpc_sse_qmt_router_port = os.environ.get("GRPC_SSE_QMT_ROUTER_PORT",
-                                              "5001")
+    grpc_sse_gateway_router_host = os.environ.get("GRPC_SSE_GATEWAY_ROUTER_HOST",
+                                                  "sse.gateway.router")
+    grpc_sse_gateway_router_port = os.environ.get("GRPC_SSE_GATEWAY_ROUTER_PORT",
+                                                  "5001")
 
     # get job data from environment variable
     job_json = os.environ.get("JOB_DATA_JSON")
@@ -47,7 +47,7 @@ def req_transpile_and_exec(
         raise OSError(msg)
 
     with grpc.insecure_channel(
-        f"{grpc_sse_qmt_router_host}:{grpc_sse_qmt_router_port}"
+        f"{grpc_sse_gateway_router_host}:{grpc_sse_gateway_router_port}"
     ) as channel:
         created = datetime.datetime.now(tz=datetime.UTC) \
                                     .strftime("%Y-%m-%d %H:%M:%S")
@@ -58,14 +58,9 @@ def req_transpile_and_exec(
         request = sse_pb2.TranspileAndExecRequest(job_data_json=json.dumps(req_json))
         response = stub.TranspileAndExec(request)
 
-        if response.status != "succeeded":
-            msg = f"To execute sampling on OQTOPUS server is failed. reason: {response.message}"  # noqa: E501
-            raise BackendError(msg)
-
+        # make content of output file to pass the result to sserunner
         ended = datetime.datetime.now(tz=datetime.UTC) \
-                                .strftime("%Y-%m-%d %H:%M:%S")
-
-        # make content of output file to pass to sserunner
+                        .strftime("%Y-%m-%d %H:%M:%S")
         job = _make_job_def(job_json, qasm[0], n_shots, transpiler, response)
         job.submitted_at = created
         job.ready_at = created
@@ -74,6 +69,11 @@ def req_transpile_and_exec(
 
         # write the content into result.json
         _log_result(_make_resultjson(job), "result.json")
+
+        # raise error if the job execution is failed
+        if response.status != "succeeded":
+            msg = f"To execute sampling on OQTOPUS server is failed. reason: {response.message}"  # noqa: E501
+            raise BackendError(msg)
 
         return job
 
@@ -86,21 +86,20 @@ def _make_job_def(
     response: sse_pb2.TranspileAndExecResponse,
 ) -> JobsJobDef:
     job_dict = json.loads(job_json)
-    result_dict = json.loads(response.result)
+    result_dict = json.loads(response.result or "{}")
 
     # result related data
-    counts = result_dict["counts"]
+    counts = result_dict.get("counts", None)
 
     # transpile result related data
-    transpiled_program = response.transpiled_qasm
-    stats = result_dict["transpiler_info"].get("stats", "")
-    virtual_physical_mapping = json.dumps(
-        result_dict["transpiler_info"].get("virtual_physical_mapping", "")
-    )  # the key name mismatch should be fixed
+    transpiled_program = response.transpiled_qasm or ""
+    stats = result_dict.get("transpiler_info", {}).get("stats", "{}") or "{}"
+    virtual_physical_mapping = result_dict.get("transpiler_info", {}) \
+                                            .get("virtual_physical_mapping", "{}") or "{}"
 
     # job_info related data
     program = [qasm]
-    message = result_dict["message"]
+    message = response.message or ""
 
     # make job objects
     sampling_result = JobsSamplingResult(
@@ -139,10 +138,10 @@ def _make_job_def(
 
 def _make_resultjson(job: JobsJobDef) -> dict[str, Any]:
     # convert the job data in order to make it readable in engine
-
     output_contents = job.to_dict()
     transpile_result_dict = output_contents["job_info"]["transpile_result"]
     # convert the string to dictionary
+    transpile_result_dict["stats"] = json.loads(transpile_result_dict["stats"])
     transpile_result_dict["virtual_physical_mapping"] = json.loads(
         transpile_result_dict["virtual_physical_mapping"]
     )
