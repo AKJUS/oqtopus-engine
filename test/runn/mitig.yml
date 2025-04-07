@@ -23,7 +23,7 @@ steps:
               name: mitigation
               shots: 1000
               mitigation_info:
-                readout: pseudo_inverse
+                ro_error_mitigation: pseudo_inverse
               status: submitted
     test: |
       current.res.status == 200

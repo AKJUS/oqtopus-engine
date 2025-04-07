@@ -94,9 +94,9 @@ func (j *SamplingJob) PostProcess() {
 	if j.mitigationInfo.PropertyRaw != nil && json.Valid(j.mitigationInfo.PropertyRaw) {
 		var props map[string]string
 		if err := json.Unmarshal(j.mitigationInfo.PropertyRaw, &props); err == nil {
-			readoutValue, ok := props["readout"]
+			roErrorMitigationValue, ok := props["ro_error_mitigation"] // Changed key and variable name
 			// mitig.go と同様に TrimSpace とダブルクォート付きで比較
-			if ok && strings.TrimSpace(readoutValue) == "\"pseudo_inverse\"" {
+			if ok && strings.TrimSpace(roErrorMitigationValue) == "\"pseudo_inverse\"" { // Changed variable name
 				shouldMitigate = true
 			}
 		} else {

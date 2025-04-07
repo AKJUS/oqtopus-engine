@@ -217,8 +217,8 @@ func (j *EstimationJob) PostProcess() {
 		if m.PropertyRaw != nil && json.Valid(m.PropertyRaw) {
 			var props map[string]string
 			if err := json.Unmarshal(m.PropertyRaw, &props); err == nil {
-				readoutValue, ok := props["readout"]
-				if ok && readoutValue == "pseudo_inverse" {
+				roErrorMitigationValue, ok := props["ro_error_mitigation"] // Changed key and variable name
+				if ok && roErrorMitigationValue == "pseudo_inverse" {      // Changed variable name
 					shouldMitigate = true
 				}
 			} else {

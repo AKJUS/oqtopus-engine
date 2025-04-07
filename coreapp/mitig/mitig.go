@@ -38,14 +38,14 @@ func NewMitigationInfoFromJobData(jd *core.JobData) *MitigationInfo {
 		if err := json.Unmarshal(m.PropertyRaw, &props); err != nil {
 			zap.L().Warn(fmt.Sprintf("failed to unmarshal PropertyRaw into map for JobID:%s, assuming not mitigated: %s", jd.ID, err))
 		} else {
-			readoutValue, ok := props["readout"]
+			roErrorMitigationValue, ok := props["ro_error_mitigation"]
 			// TrimSpace を行い、比較対象をダブルクォート付きに変更
-			if ok && strings.TrimSpace(readoutValue) == "\"pseudo_inverse\"" {
-				zap.L().Debug(fmt.Sprintf("JobID:%s Need to be mitigated based on PropertyRaw.readout", jd.ID))
+			if ok && strings.TrimSpace(roErrorMitigationValue) == "\"pseudo_inverse\"" {
+				zap.L().Debug(fmt.Sprintf("JobID:%s Need to be mitigated based on PropertyRaw.ro_error_mitigation", jd.ID))
 				m.NeedToBeMitigated = true
 			} else {
 				// 不要になった詳細ログは削除
-				zap.L().Debug(fmt.Sprintf("JobID:%s does not need to be mitigated based on PropertyRaw.readout (value: %s, found: %t)", jd.ID, readoutValue, ok))
+				zap.L().Debug(fmt.Sprintf("JobID:%s does not need to be mitigated based on PropertyRaw.ro_error_mitigation (value: %s, found: %t)", jd.ID, roErrorMitigationValue, ok))
 			}
 		}
 	} else if len(inputBytes) == 0 {

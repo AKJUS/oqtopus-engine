@@ -16,29 +16,29 @@ func TestNewMitigationInfoFromJobData(t *testing.T) {
 	}{
 		{
 			name: "pseudo_inverse mitigation",
-			// Modify readout value to include escaped quotes to match the implementation logic
-			mitigationInfo:        `{"readout": "\"pseudo_inverse\"", "other": "data"}`,
+			// Modify ro_error_mitigation value to include escaped quotes to match the implementation logic
+			mitigationInfo:        `{"ro_error_mitigation": "\"pseudo_inverse\"", "other": "data"}`,
 			wantNeedToBeMitigated: true,
 			// Update wantPropertyRaw to reflect the change in mitigationInfo
-			wantPropertyRaw: `{"readout": "\"pseudo_inverse\"", "other": "data"}`,
+			wantPropertyRaw: `{"ro_error_mitigation": "\"pseudo_inverse\"", "other": "data"}`,
 		},
 		{
-			name:                  "other readout mitigation",
-			mitigationInfo:        `{"readout": "other"}`,
+			name:                  "other ro_error_mitigation mitigation",
+			mitigationInfo:        `{"ro_error_mitigation": "other"}`,
 			wantNeedToBeMitigated: false,
-			wantPropertyRaw:       `{"readout": "other"}`,
+			wantPropertyRaw:       `{"ro_error_mitigation": "other"}`,
 		},
 		{
-			name:                  "no readout field",
+			name:                  "no ro_error_mitigation field",
 			mitigationInfo:        `{"some_other_field": "value"}`,
 			wantNeedToBeMitigated: false,
 			wantPropertyRaw:       `{"some_other_field": "value"}`,
 		},
 		{
 			name:                  "invalid json",
-			mitigationInfo:        `{"readout": "pseudo_inverse"`,
+			mitigationInfo:        `{"ro_error_mitigation": "pseudo_inverse"`, // Keep the key change here
 			wantNeedToBeMitigated: false,
-			wantPropertyRaw:       ``,
+			wantPropertyRaw:       ``, // wantPropertyRaw remains empty for invalid JSON
 		},
 		{
 			name:                  "empty string",
