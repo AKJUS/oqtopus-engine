@@ -14,34 +14,44 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// TODO: use setting
+type PropertyRaw json.RawMessage
+
 var mitigator_port = "5011"
 
 type MitigationInfo struct {
 	NeedToBeMitigated bool
 	Mitigated         bool
 
-	Readout string `json:"readout"`
+	PropertyRaw PropertyRaw
 }
 
-// NewMitigationInfoFromJobData creates a MitigationInfo from JobData.
 func NewMitigationInfoFromJobData(jd *core.JobData) *MitigationInfo {
-	m := MitigationInfo{}
-	if err := json.Unmarshal([]byte(jd.MitigationInfo), &m); err != nil {
-		zap.L().Error(fmt.Sprintf("failed to unmarshal MitigationInfo from :%s/reason:%s",
-			jd.MitigationInfo, err))
-		m.NeedToBeMitigated = false
-	} else {
-		if m.Readout == "pseudo_inverse" { // TODO: check this condition
-			zap.L().Debug(fmt.Sprintf("JobID:%s Need to be mitigated", jd.ID))
-			m.NeedToBeMitigated = true
-		} else {
-			zap.L().Debug(fmt.Sprintf("JobID:%s does not need to be mitigated", jd.ID))
-			m.NeedToBeMitigated = false
-		}
+	m := MitigationInfo{
+		Mitigated: false,
 	}
-	m.Mitigated = false
-	zap.L().Debug(fmt.Sprintf("set MitigationInfo:%s", jd.MitigationInfo))
+	m.NeedToBeMitigated = false
+	inputBytes := []byte(jd.MitigationInfo)
+
+	if len(inputBytes) > 0 && json.Valid(inputBytes) {
+		m.PropertyRaw = PropertyRaw(inputBytes)
+		var props map[string]string
+		if err := json.Unmarshal(m.PropertyRaw, &props); err != nil {
+			zap.L().Warn(fmt.Sprintf("failed to unmarshal PropertyRaw into map for JobID:%s, assuming not mitigated: %s", jd.ID, err))
+		} else {
+			readoutValue, ok := props["readout"]
+			if ok && readoutValue == "pseudo_inverse" {
+				zap.L().Debug(fmt.Sprintf("JobID:%s Need to be mitigated based on PropertyRaw.readout", jd.ID))
+				m.NeedToBeMitigated = true
+			} else {
+				zap.L().Debug(fmt.Sprintf("JobID:%s does not need to be mitigated based on PropertyRaw.readout (value: %s, found: %t)", jd.ID, readoutValue, ok))
+			}
+		}
+	} else if len(inputBytes) == 0 {
+		zap.L().Debug(fmt.Sprintf("JobID:%s MitigationInfo string is empty, assuming not mitigated", jd.ID))
+	} else {
+		zap.L().Warn(fmt.Sprintf("JobID:%s MitigationInfo string is not valid JSON, assuming not mitigated: %s", jd.ID, jd.MitigationInfo))
+	}
+	zap.L().Debug(fmt.Sprintf("set MitigationInfo PropertyRaw: %s, NeedToBeMitigated: %t", string(m.PropertyRaw), m.NeedToBeMitigated))
 	return &m
 }
 
@@ -53,11 +63,9 @@ func PseudoInverseMitigation(jd *core.JobData) {
 		return
 	}
 
-	// TODO: Allow to be set by parameters
 	host := "localhost"
 	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
 
-	// connect server
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", host, mitigator_port), opts)
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("did not connect: %v", err))
@@ -82,7 +90,6 @@ func PseudoInverseMitigation(jd *core.JobData) {
 		return
 	}
 
-	// Convert PhysicalVirtualMapping to sorted MeasuredQubits
 	var pvm core.PhysicalVirtualMapping
 	if len(jd.Result.TranspilerInfo.PhysicalVirtualMapping) == 0 {
 		zap.L().Debug("PhysicalVirtualMapping is nil/use default")
@@ -110,12 +117,11 @@ func PseudoInverseMitigation(jd *core.JobData) {
 	mreq := &pb.ReqMitigationRequest{
 		DeviceTopology: dt,
 		Counts:         cts,
-		Shots:          shots, // it is redundant...
+		Shots:          shots,
 		MeasuredQubits: mq,
 	}
 	zap.L().Debug(fmt.Sprintf("MitigationJob Request: %v", mreq))
 
-	// send request to gRPC server
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -128,7 +134,6 @@ func PseudoInverseMitigation(jd *core.JobData) {
 
 	zap.L().Debug(fmt.Sprintf("MitigationJob Response: %v", res))
 	zap.L().Debug(fmt.Sprintf("MitigationJob Result Counts: %v", res.Counts))
-	// get lower bits from counts
 	lbcts := make(map[string]uint32)
 	for k, v := range res.Counts {
 		lbcts[getLowerBits(k, numOfQubits)] = uint32(v)

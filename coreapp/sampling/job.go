@@ -1,6 +1,7 @@
 package sampling
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/oqtopus-team/oqtopus-engine/coreapp/core"
@@ -38,8 +39,6 @@ func (j *SamplingJob) preProcessImpl() (err error) {
 	err = nil
 	jd := j.JobData()
 	container := core.GetSystemComponents().Container
-	// TODO refactor this part
-	// make jobID pool in syscomponent
 	err = container.Invoke(
 		func(d core.DBManager) error {
 			if d.ExistInInnerJobIDSet(jd.ID) {
@@ -89,11 +88,27 @@ func (j *SamplingJob) Process() {
 
 func (j *SamplingJob) PostProcess() {
 	j.mitigationInfo.Mitigated = true
-	if j.mitigationInfo.Readout == "pseudo_inverse" {
-		zap.L().Debug(fmt.Sprintf("start to do pseudo inverse mitigation"))
+
+	shouldMitigate := false
+	if j.mitigationInfo.PropertyRaw != nil && json.Valid(j.mitigationInfo.PropertyRaw) {
+		var props map[string]string
+		if err := json.Unmarshal(j.mitigationInfo.PropertyRaw, &props); err == nil {
+			readoutValue, ok := props["readout"]
+			if ok && readoutValue == "pseudo_inverse" {
+				shouldMitigate = true
+			}
+		} else {
+			zap.L().Warn(fmt.Sprintf("JobID:%s - Failed to unmarshal PropertyRaw in PostProcess: %v", j.JobData().ID, err))
+		}
+	} else {
+		zap.L().Debug(fmt.Sprintf("JobID:%s - PropertyRaw is nil or invalid JSON in PostProcess", j.JobData().ID))
+	}
+
+	if shouldMitigate {
+		zap.L().Debug(fmt.Sprintf("JobID:%s - Starting pseudo inverse mitigation", j.JobData().ID))
 		mitig.PseudoInverseMitigation(j.JobData())
 	} else {
-		zap.L().Debug(fmt.Sprintf("skip pseudo inverse mitigation"))
+		zap.L().Debug(fmt.Sprintf("JobID:%s - Skipping pseudo inverse mitigation", j.JobData().ID))
 	}
 	return
 }
