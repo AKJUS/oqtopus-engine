@@ -141,7 +141,13 @@ func (j *SamplingJob) setMitigationInfo() {
 			j.JobData().MitigationInfo, err))
 		m.NeedToBeMitigated = false
 	} else {
-		m.NeedToBeMitigated = true
+		if m.Readout == "pseudo_inverse" { // TODO: check this condition
+			zap.L().Debug(fmt.Sprintf("JobID:%s Need to be mitigated", j.JobData().ID))
+			m.NeedToBeMitigated = true
+		} else {
+			zap.L().Debug(fmt.Sprintf("JobID:%s does not need to be mitigated", j.JobData().ID))
+			m.NeedToBeMitigated = false
+		}
 	}
 	m.Mitigated = false
 	zap.L().Debug(fmt.Sprintf("set MitigationInfo:%s", j.JobData().MitigationInfo))
