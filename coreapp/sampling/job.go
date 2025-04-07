@@ -94,7 +94,10 @@ func (j *SamplingJob) PostProcess() {
 			j.JobData().MitigationInfo, err))
 	}
 	if m.Readout == "pseudo_inverse" {
+		zap.L().Debug(fmt.Sprintf("start to do pseudo inverse mitigation"))
 		mitig.PseudoInverseMitigation(j.JobData())
+	} else {
+		zap.L().Debug(fmt.Sprintf("skip pseudo inverse mitigation"))
 	}
 	return
 }

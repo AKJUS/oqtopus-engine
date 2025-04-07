@@ -37,6 +37,7 @@ func PseudoInverseMitigation(jd *core.JobData) {
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", host, mitigator_port), opts)
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("did not connect: %v", err))
+		return
 	}
 	defer conn.Close()
 	client := pb.NewErrorMitigatorServiceClient(conn)
