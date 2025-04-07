@@ -69,11 +69,14 @@ func PseudoInverseMitigation(jd *core.JobData) {
 	host := "localhost"
 	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
 
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", host, mitigator_port), opts)
+	target := fmt.Sprintf("%s:%s", host, mitigator_port) // 接続先を保持
+	conn, err := grpc.Dial(target, opts)
 	if err != nil {
-		zap.L().Error(fmt.Sprintf("did not connect: %v", err))
+		zap.L().Error(fmt.Sprintf("Failed to connect to mitigator service at %s: %v", target, err))
 		return
 	}
+	// 接続成功ログを追加
+	zap.L().Debug(fmt.Sprintf("Successfully connected to mitigator service at %s", target))
 	defer conn.Close()
 	client := pb.NewErrorMitigatorServiceClient(conn)
 
