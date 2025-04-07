@@ -20,7 +20,7 @@ steps:
                 program:
                 - OPENQASM 3; include "stdgates.inc"; qubit[2] q; bit[2] c; x q[1]; c = measure q;
               job_type: sampling
-              name: estim
+              name: mitigation
               shots: 1000
               mitigation_info:
                 readout: pseudo_inverse
