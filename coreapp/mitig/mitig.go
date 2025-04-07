@@ -2,10 +2,11 @@ package mitig
 
 import (
 	"context"
+	"encoding/hex" // 再度追加
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strings" // 追加
+	"strings"
 	"time"
 
 	"github.com/oqtopus-team/oqtopus-engine/coreapp/core"
@@ -45,6 +46,12 @@ func NewMitigationInfoFromJobData(jd *core.JobData) *MitigationInfo {
 				zap.L().Debug(fmt.Sprintf("JobID:%s Need to be mitigated based on PropertyRaw.readout", jd.ID))
 				m.NeedToBeMitigated = true
 			} else {
+				// else ブロック内で詳細ログを出力
+				trimmedValue := strings.TrimSpace(readoutValue)
+				zap.L().Debug(fmt.Sprintf("JobID:%s Comparison failed. Details - ok: %t, originalValue: '%s' (len:%d, hex:%s), trimmedValue: '%s' (len:%d, hex:%s)",
+					jd.ID, ok, readoutValue, len(readoutValue), hex.EncodeToString([]byte(readoutValue)),
+					trimmedValue, len(trimmedValue), hex.EncodeToString([]byte(trimmedValue))))
+				// 元のログも残しておく
 				zap.L().Debug(fmt.Sprintf("JobID:%s does not need to be mitigated based on PropertyRaw.readout (value: %s, found: %t)", jd.ID, readoutValue, ok))
 			}
 		}
