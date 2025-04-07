@@ -24,6 +24,27 @@ type MitigationInfo struct {
 	Readout string `json:"readout"`
 }
 
+// NewMitigationInfoFromJobData creates a MitigationInfo from JobData.
+func NewMitigationInfoFromJobData(jd *core.JobData) *MitigationInfo {
+	m := MitigationInfo{}
+	if err := json.Unmarshal([]byte(jd.MitigationInfo), &m); err != nil {
+		zap.L().Error(fmt.Sprintf("failed to unmarshal MitigationInfo from :%s/reason:%s",
+			jd.MitigationInfo, err))
+		m.NeedToBeMitigated = false
+	} else {
+		if m.Readout == "pseudo_inverse" { // TODO: check this condition
+			zap.L().Debug(fmt.Sprintf("JobID:%s Need to be mitigated", jd.ID))
+			m.NeedToBeMitigated = true
+		} else {
+			zap.L().Debug(fmt.Sprintf("JobID:%s does not need to be mitigated", jd.ID))
+			m.NeedToBeMitigated = false
+		}
+	}
+	m.Mitigated = false
+	zap.L().Debug(fmt.Sprintf("set MitigationInfo:%s", jd.MitigationInfo))
+	return &m
+}
+
 func PseudoInverseMitigation(jd *core.JobData) {
 	numOfQubits, err := getNumOfQubits(jd.Result.Counts)
 	if err != nil {

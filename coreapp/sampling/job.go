@@ -1,7 +1,6 @@
 package sampling
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/oqtopus-team/oqtopus-engine/coreapp/core"
@@ -31,7 +30,7 @@ func (j *SamplingJob) PreProcess() {
 		core.SetFailureWithError(j, err)
 		return
 	}
-	j.setMitigationInfo()
+	j.mitigationInfo = mitig.NewMitigationInfoFromJobData(j.JobData())
 	return
 }
 
@@ -132,24 +131,4 @@ func (j *SamplingJob) Clone() core.Job {
 		jobContext: j.jobContext,
 	}
 	return cloned
-}
-
-func (j *SamplingJob) setMitigationInfo() {
-	m := mitig.MitigationInfo{}
-	if err := json.Unmarshal([]byte(j.JobData().MitigationInfo), &m); err != nil {
-		zap.L().Error(fmt.Sprintf("failed to unmarshal MitigationInfo from :%s/reason:%s",
-			j.JobData().MitigationInfo, err))
-		m.NeedToBeMitigated = false
-	} else {
-		if m.Readout == "pseudo_inverse" { // TODO: check this condition
-			zap.L().Debug(fmt.Sprintf("JobID:%s Need to be mitigated", j.JobData().ID))
-			m.NeedToBeMitigated = true
-		} else {
-			zap.L().Debug(fmt.Sprintf("JobID:%s does not need to be mitigated", j.JobData().ID))
-			m.NeedToBeMitigated = false
-		}
-	}
-	m.Mitigated = false
-	zap.L().Debug(fmt.Sprintf("set MitigationInfo:%s", j.JobData().MitigationInfo))
-	j.mitigationInfo = &m
 }
