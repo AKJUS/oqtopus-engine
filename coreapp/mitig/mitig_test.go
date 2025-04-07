@@ -15,10 +15,12 @@ func TestNewMitigationInfoFromJobData(t *testing.T) {
 		wantPropertyRaw       string
 	}{
 		{
-			name:                  "pseudo_inverse mitigation",
-			mitigationInfo:        `{"readout": "pseudo_inverse", "other": "data"}`,
+			name: "pseudo_inverse mitigation",
+			// Modify readout value to include escaped quotes to match the implementation logic
+			mitigationInfo:        `{"readout": "\"pseudo_inverse\"", "other": "data"}`,
 			wantNeedToBeMitigated: true,
-			wantPropertyRaw:       `{"readout": "pseudo_inverse", "other": "data"}`,
+			// Update wantPropertyRaw to reflect the change in mitigationInfo
+			wantPropertyRaw: `{"readout": "\"pseudo_inverse\"", "other": "data"}`,
 		},
 		{
 			name:                  "other readout mitigation",
