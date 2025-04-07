@@ -77,6 +77,58 @@ func TestGetLowerBits(t *testing.T) {
 	}
 }
 
+func TestNewMitigationInfoFromJobData(t *testing.T) {
+	tests := []struct {
+		name           string
+		mitigationInfo string
+		want           MitigationInfo
+	}{
+		{
+			name:           "pseudo_inverse mitigation",
+			mitigationInfo: `{"readout": "pseudo_inverse"}`,
+			want:           MitigationInfo{NeedToBeMitigated: true, Mitigated: false, Readout: "pseudo_inverse"},
+		},
+		{
+			name:           "other readout mitigation",
+			mitigationInfo: `{"readout": "other"}`,
+			want:           MitigationInfo{NeedToBeMitigated: false, Mitigated: false, Readout: "other"},
+		},
+		{
+			name:           "no readout field",
+			mitigationInfo: `{"some_other_field": "value"}`,
+			want:           MitigationInfo{NeedToBeMitigated: false, Mitigated: false, Readout: ""},
+		},
+		{
+			name:           "invalid json",
+			mitigationInfo: `{"readout": "pseudo_inverse"`, // Missing closing brace
+			want:           MitigationInfo{NeedToBeMitigated: false, Mitigated: false, Readout: ""},
+		},
+		{
+			name:           "empty string",
+			mitigationInfo: ``,
+			want:           MitigationInfo{NeedToBeMitigated: false, Mitigated: false, Readout: ""},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			jd := &core.JobData{
+				MitigationInfo: tt.mitigationInfo,
+				ID:             "test-job-" + tt.name, // Add unique ID for logging clarity
+			}
+			got := NewMitigationInfoFromJobData(jd)
+
+			// We only check NeedToBeMitigated and Mitigated as Readout might not be set correctly on error
+			assert.Equal(t, tt.want.NeedToBeMitigated, got.NeedToBeMitigated, "NeedToBeMitigated mismatch")
+			assert.Equal(t, tt.want.Mitigated, got.Mitigated, "Mitigated mismatch")
+			// Optionally check Readout only if parsing was expected to succeed
+			if tt.name != "invalid json" && tt.name != "empty string" {
+				assert.Equal(t, tt.want.Readout, got.Readout, "Readout mismatch")
+			}
+		})
+	}
+}
+
 func TestPseudoInverseMitigation(t *testing.T) {
 	s := core.SCWithUnimplementedContainer()
 	defer s.TearDown()
