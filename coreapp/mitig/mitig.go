@@ -20,8 +20,8 @@ var mitigator_port = "5011"
 type MitigationInfo struct {
 	NeedToBeMitigated bool
 	Mitigated         bool
-	
-	Readout string
+
+	Readout string `json:"readout"`
 }
 
 func PseudoInverseMitigation(jd *core.JobData) {
