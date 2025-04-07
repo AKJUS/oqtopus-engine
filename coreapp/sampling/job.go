@@ -117,12 +117,16 @@ func (j *SamplingJob) PostProcess() {
 
 func (j *SamplingJob) IsFinished() bool {
 	zap.L().Debug(fmt.Sprintf("checking if job(%s) is finished", j.JobData().ID))
+	if j.JobData().Status == core.FAILED {
+		zap.L().Debug(fmt.Sprintf("job(%s) is failed", j.JobData().ID))
+		return true
+	}
 	if j.mitigationInfo.NeedToBeMitigated {
 		zap.L().Debug(fmt.Sprintf("job(%s) need to be mitigated", j.JobData().ID))
 		return j.mitigationInfo.Mitigated
 	} else {
 		zap.L().Debug(fmt.Sprintf("job(%s) does not need to be mitigated", j.JobData().ID))
-		return j.JobData().Status == core.SUCCEEDED || j.JobData().Status == core.FAILED
+		return j.JobData().Status == core.SUCCEEDED
 	}
 }
 
