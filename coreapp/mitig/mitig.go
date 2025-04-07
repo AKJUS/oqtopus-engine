@@ -18,6 +18,9 @@ import (
 var mitigator_port = "5011"
 
 type MitigationInfo struct {
+	NeedToBeMitigated bool
+	Mitigated         bool
+	
 	Readout string
 }
 
