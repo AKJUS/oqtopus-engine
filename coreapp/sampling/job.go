@@ -3,6 +3,7 @@ package sampling
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/oqtopus-team/oqtopus-engine/coreapp/core"
 	"github.com/oqtopus-team/oqtopus-engine/coreapp/mitig"
@@ -94,7 +95,8 @@ func (j *SamplingJob) PostProcess() {
 		var props map[string]string
 		if err := json.Unmarshal(j.mitigationInfo.PropertyRaw, &props); err == nil {
 			readoutValue, ok := props["readout"]
-			if ok && readoutValue == "pseudo_inverse" {
+			// mitig.go と同様に TrimSpace とダブルクォート付きで比較
+			if ok && strings.TrimSpace(readoutValue) == "\"pseudo_inverse\"" {
 				shouldMitigate = true
 			}
 		} else {
