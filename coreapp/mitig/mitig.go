@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/oqtopus-team/oqtopus-engine/coreapp/common"
 	"github.com/oqtopus-team/oqtopus-engine/coreapp/core"
 	pb "github.com/oqtopus-team/oqtopus-engine/coreapp/mitig/mitigation_interface/v1"
 	"go.uber.org/zap"
@@ -16,8 +17,6 @@ import (
 )
 
 type PropertyRaw json.RawMessage
-
-var mitigator_port = "5011"
 
 type MitigationInfo struct {
 	NeedToBeMitigated bool
@@ -66,16 +65,45 @@ func PseudoInverseMitigation(jd *core.JobData) {
 		return
 	}
 
-	host := "localhost"
-	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
+	var mitigatorSetting core.MitigatorSetting
+	s, ok := core.GetComponentSetting("mitigator")
+	if !ok {
+		zap.L().Warn("mitigator setting not found, using default values")
+		mitigatorSetting = core.NewMitigatorSetting()
+	} else {
+		mapped, ok := s.(map[string]interface{})
+		if !ok {
+			zap.L().Warn("mitigator setting has incorrect type, using default values")
+			mitigatorSetting = core.NewMitigatorSetting()
+		} else {
+			hostVal, hostOk := mapped["host"].(string)
+			portVal, portOk := mapped["port"].(string)
+			if !hostOk || !portOk {
+				zap.L().Warn("mitigator setting fields have incorrect types or are missing, using default values")
+				mitigatorSetting = core.NewMitigatorSetting()
+			} else {
+				mitigatorSetting = core.MitigatorSetting{
+					Host: hostVal,
+					Port: portVal,
+				}
+			}
+		}
+	}
+	zap.L().Debug(fmt.Sprintf("Using mitigator settings: Host=%s, Port=%s", mitigatorSetting.Host, mitigatorSetting.Port))
 
-	target := fmt.Sprintf("%s:%s", host, mitigator_port) // 接続先を保持
+	target, err := common.ValidAddress(mitigatorSetting.Host, mitigatorSetting.Port)
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("Invalid mitigator address: Host=%s, Port=%s, Error=%v", mitigatorSetting.Host, mitigatorSetting.Port, err))
+		jd.Status = core.FAILED
+		return
+	}
+
+	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
 	conn, err := grpc.Dial(target, opts)
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("Failed to connect to mitigator service at %s: %v", target, err))
 		return
 	}
-	// 接続成功ログを追加
 	zap.L().Debug(fmt.Sprintf("Successfully connected to mitigator service at %s", target))
 	defer conn.Close()
 	client := pb.NewErrorMitigatorServiceClient(conn)
