@@ -12,8 +12,10 @@ import (
 const SAMPLING_JOB = "sampling"
 
 type SamplingJob struct {
-	jobData    *core.JobData
-	jobContext *core.JobContext
+	jobData        *core.JobData
+	jobContext     *core.JobContext
+	mitigationInfo *mitig.MitigationInfo // null means no mitigation
+	mitigated      bool
 }
 
 func (j *SamplingJob) New(jd *core.JobData, jc *core.JobContext) core.Job {
@@ -30,6 +32,7 @@ func (j *SamplingJob) PreProcess() {
 		core.SetFailureWithError(j, err)
 		return
 	}
+	j.setMitigationInfo()
 	return
 }
 
@@ -87,23 +90,23 @@ func (j *SamplingJob) Process() {
 }
 
 func (j *SamplingJob) PostProcess() {
-	m := mitig.MitigationInfo{}
-	err := json.Unmarshal([]byte(j.JobData().MitigationInfo), &m)
-	if err != nil {
-		zap.L().Error(fmt.Sprintf("failed to unmarshal MitigationInfo from :%s/reason:%s",
-			j.JobData().MitigationInfo, err))
-	}
-	if m.Readout == "pseudo_inverse" {
+	j.mitigated = true
+	if j.mitigationInfo.Readout == "pseudo_inverse" {
 		zap.L().Debug(fmt.Sprintf("start to do pseudo inverse mitigation"))
 		mitig.PseudoInverseMitigation(j.JobData())
 	} else {
+		zap.L().Debug(fmt.Sprintf(fmt.Sprintf("mitigation info is %s", j.mitigationInfo)))
 		zap.L().Debug(fmt.Sprintf("skip pseudo inverse mitigation"))
 	}
 	return
 }
 
 func (j *SamplingJob) IsFinished() bool {
-	return j.JobData().Status == core.SUCCEEDED || j.JobData().Status == core.FAILED
+	if j.mitigationInfo == nil {
+		return j.JobData().Status == core.SUCCEEDED || j.JobData().Status == core.FAILED
+	} else {
+		return j.mitigated
+	}
 }
 
 func (j *SamplingJob) JobData() *core.JobData {
@@ -128,4 +131,17 @@ func (j *SamplingJob) Clone() core.Job {
 		jobContext: j.jobContext,
 	}
 	return cloned
+}
+
+func (j *SamplingJob) setMitigationInfo() {
+	m := mitig.MitigationInfo{}
+	err := json.Unmarshal([]byte(j.JobData().MitigationInfo), &m)
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("failed to unmarshal MitigationInfo from :%s/reason:%s",
+			j.JobData().MitigationInfo, err))
+		j.mitigationInfo = nil
+		return
+	}
+	zap.L().Debug(fmt.Sprintf("set MitigationInfo:%s", j.JobData().MitigationInfo))
+	j.mitigationInfo = &m
 }
