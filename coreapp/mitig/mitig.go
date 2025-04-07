@@ -2,7 +2,6 @@ package mitig
 
 import (
 	"context"
-	"encoding/hex" // 再度追加
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -41,17 +40,12 @@ func NewMitigationInfoFromJobData(jd *core.JobData) *MitigationInfo {
 			zap.L().Warn(fmt.Sprintf("failed to unmarshal PropertyRaw into map for JobID:%s, assuming not mitigated: %s", jd.ID, err))
 		} else {
 			readoutValue, ok := props["readout"]
-			// 比較前に TrimSpace を追加
-			if ok && strings.TrimSpace(readoutValue) == "pseudo_inverse" {
+			// TrimSpace を行い、比較対象をダブルクォート付きに変更
+			if ok && strings.TrimSpace(readoutValue) == "\"pseudo_inverse\"" {
 				zap.L().Debug(fmt.Sprintf("JobID:%s Need to be mitigated based on PropertyRaw.readout", jd.ID))
 				m.NeedToBeMitigated = true
 			} else {
-				// else ブロック内で詳細ログを出力
-				trimmedValue := strings.TrimSpace(readoutValue)
-				zap.L().Debug(fmt.Sprintf("JobID:%s Comparison failed. Details - ok: %t, originalValue: '%s' (len:%d, hex:%s), trimmedValue: '%s' (len:%d, hex:%s)",
-					jd.ID, ok, readoutValue, len(readoutValue), hex.EncodeToString([]byte(readoutValue)),
-					trimmedValue, len(trimmedValue), hex.EncodeToString([]byte(trimmedValue))))
-				// 元のログも残しておく
+				// 不要になった詳細ログは削除
 				zap.L().Debug(fmt.Sprintf("JobID:%s does not need to be mitigated based on PropertyRaw.readout (value: %s, found: %t)", jd.ID, readoutValue, ok))
 			}
 		}
