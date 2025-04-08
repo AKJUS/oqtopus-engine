@@ -36,9 +36,9 @@ func NewDefaultGatewayAgentSetting() DefaultGatewayAgentSetting {
 	return DefaultGatewayAgentSetting{
 		GatewayHost: "localhost",
 		GatewayPort: "50051",
-		APIEndpoint: "localhost",
-		APIKey:      "hogehoge",
-		DeviceId:    "hogehoge",
+		APIEndpoint: "https://localhost",
+		APIKey:      "your_api_key",
+		DeviceId:    "your_device_id",
 	}
 }
 
