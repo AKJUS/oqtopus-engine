@@ -1,6 +1,6 @@
 [estimation]
 estimator_port = 502
-estimator_host = "hoge.com"
+estimator_host = "example.com"
 [run_group]
   [run_group.periodic_tasks]
     [run_group.periodic_tasks.poller]
@@ -9,7 +9,7 @@ estimator_host = "hoge.com"
       enable_test_mode = true
       edge = "polling_test_edge"
       device = "polling_test_device"
-      endpoint = "localhost:3001"
+      endpoint = "http://example.com:3001"
       normal_period = "500ms"
       idle_period = "500ms"
     [run_group.periodic_tasks.version_log]
@@ -38,6 +38,6 @@ estimator_host = "hoge.com"
   [com.gateway]
   gateway_host = "localhost"
   gateway_port = "50051"
-  api_endpoint = "hoge.com/v1"
+  api_endpoint = "https://example.com/v1"
   api_key = "secret_api_key"
   device_id = "your_device_id"

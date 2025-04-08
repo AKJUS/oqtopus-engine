@@ -70,10 +70,6 @@ func (p SecuritySource) ApiKeyAuth(ctx context.Context, name string) (api.ApiKey
 // It uses the SecuritySource for authentication.
 func NewAPIClient(endpoint, apiKey string) (*api.Client, error) {
 	ss := SecuritySource{apiKey: apiKey}
-	// Ensure the endpoint starts with https://
-	if !strings.HasPrefix(endpoint, "https://") && !strings.HasPrefix(endpoint, "http://") {
-		endpoint = "https://" + endpoint
-	}
 	cli, err := api.NewClient(endpoint, ss)
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("failed to create a new API client/endpoint:%s/reason:%s", endpoint, err))
