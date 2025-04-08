@@ -41,7 +41,7 @@ func (s *ServiceDB) Setup(dbc core.DBChan, c *core.Conf) error {
 	s.apiKey = c.ServiceDBAPIKey
 	ss := dbSecuritySource{apiKey: s.apiKey}
 
-	cli, err := api.NewClient("https://"+s.endpoint, ss)
+	cli, err := api.NewClient(s.endpoint, ss)
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("failed to create a client/reason:%s", err))
 		return err
