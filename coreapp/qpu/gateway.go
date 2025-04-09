@@ -85,7 +85,7 @@ func (q *DefaultGatewayAgent) Setup() (err error) {
 		return err
 	}
 	q.gatewayAddress = address
-	apiClient, err := common.NewAPIClient(q.setting.APIEndpoint, q.setting.APIKey) // Use common.NewAPIClient
+	apiClient, err := common.NewAPIClient(q.setting.APIEndpoint, q.setting.APIKey)
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("failed to create a new API client/reason:%s", err))
 	}
@@ -248,7 +248,7 @@ func (q *DefaultGatewayAgent) updateDeviceStatus(st core.DeviceStatus) error {
 }
 
 func (q *DefaultGatewayAgent) updateDeviceInfo(di *core.DeviceInfo) error {
-	caStr, err := strToTime(di.CalibratedAt)
+	caStr, err := parseRFC3339Time(di.CalibratedAt)
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("failed to parse time %s/reason:%s", di.CalibratedAt, err))
 		return err
@@ -284,10 +284,11 @@ func toDeviceDeviceStatusUpdateStatus(ds core.DeviceStatus) api.DevicesDeviceSta
 	}
 }
 
-func strToTime(t string) (time.Time, error) {
-	tt, err := time.Parse("2006-01-02 15:04:05.999999", t)
+// parseRFC3339Time parses a time string in RFC 3339 format (which is a profile of ISO 8601).
+func parseRFC3339Time(t string) (time.Time, error) {
+	tt, err := time.Parse(time.RFC3339, t)
 	if err != nil {
-		zap.L().Error(fmt.Sprintf("failed to parse time %s/reason:%s", t, err))
+		zap.L().Error(fmt.Sprintf("failed to parse time %s using RFC3339/reason:%s", t, err))
 		return time.Time{}, err
 	}
 	return tt, nil
