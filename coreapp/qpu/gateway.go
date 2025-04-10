@@ -135,7 +135,7 @@ func (q *DefaultGatewayAgent) CallDeviceInfo() (*core.DeviceInfo, error) {
 		DeviceInfoSpecJson: di.DeviceInfo,
 		CalibratedAt:       di.CalibratedAt,
 	}
-	q.uploadDIOnChange(cd)
+	q.callDeviceAPIOnChange(cd)
 	return cd, nil
 }
 
@@ -209,7 +209,7 @@ func (q *DefaultGatewayAgent) GetAddress() string {
 	return q.gatewayAddress
 }
 
-func (q *DefaultGatewayAgent) uploadDIOnChange(newDI *core.DeviceInfo) {
+func (q *DefaultGatewayAgent) callDeviceAPIOnChange(newDI *core.DeviceInfo) {
 	updated := false
 	if hasStatusChanged(q.lastDeviceInfo, newDI) {
 		if err := q.updateDeviceStatus(newDI.Status); err != nil {
@@ -221,6 +221,13 @@ func (q *DefaultGatewayAgent) uploadDIOnChange(newDI *core.DeviceInfo) {
 	if hasDeviceInfoChanged(q.lastDeviceInfo, newDI) {
 		if err := q.updateDeviceInfo(newDI); err != nil {
 			zap.L().Error(fmt.Sprintf("failed to update device info/reason:%s", err))
+		} else {
+			updated = true
+		}
+	}
+	if hasDeviceChanged(q.lastDeviceInfo, newDI) {
+		if err := q.updateDevice(newDI); err != nil {
+			zap.L().Error(fmt.Sprintf("failed to update device/reason:%s", err))
 		} else {
 			updated = true
 		}
@@ -270,6 +277,24 @@ func (q *DefaultGatewayAgent) updateDeviceInfo(di *core.DeviceInfo) error {
 		zap.L().Error(fmt.Sprintf("failed to update device info/reason:%s", err))
 	} else {
 		zap.L().Debug(fmt.Sprintf("updated device info %v", res))
+	}
+	return err
+}
+
+func (q *DefaultGatewayAgent) updateDevice(di *core.DeviceInfo) error {
+	req := api.NewOptDevicesUpdateDeviceRequest(
+		api.DevicesUpdateDeviceRequest{
+			NQubits: api.NewOptNilInt(int(di.MaxQubits)),
+		})
+	params := api.PatchDeviceParams{
+		DeviceID: q.setting.DeviceId,
+	}
+	zap.L().Debug(fmt.Sprintf("device update to %s", di))
+	res, err := q.apiClient.PatchDevice(context.TODO(), req, params)
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("failed to update device/reason:%s", err))
+	} else {
+		zap.L().Debug(fmt.Sprintf("updated device %v", res))
 	}
 	return err
 }
@@ -330,10 +355,6 @@ func hasDeviceInfoChanged(oldDI, newDI *core.DeviceInfo) bool {
 		zap.L().Debug("DeviceInfoSpecJson is changed")
 		return true
 	}
-	if oldDI.MaxQubits != newDI.MaxQubits {
-		zap.L().Debug("MaxQubits is changed")
-		return true
-	}
 	if oldDI.MaxShots != newDI.MaxShots {
 		zap.L().Debug("MaxShots is changed")
 		return true
@@ -348,6 +369,23 @@ func hasDeviceInfoChanged(oldDI, newDI *core.DeviceInfo) bool {
 	}
 	if oldDI.Type != newDI.Type {
 		zap.L().Debug("Type is changed")
+		return true
+	}
+	return false
+}
+
+func hasDeviceChanged(oldDI, newDI *core.DeviceInfo) bool {
+	// Support only MaxQubits for now
+	if oldDI == nil {
+		zap.L().Debug("old device info is nil")
+		return true
+	}
+	if newDI == nil {
+		zap.L().Error("new device info is nil")
+		return true
+	}
+	if oldDI.MaxQubits != newDI.MaxQubits {
+		zap.L().Debug("MaxQubits is changed")
 		return true
 	}
 	return false
