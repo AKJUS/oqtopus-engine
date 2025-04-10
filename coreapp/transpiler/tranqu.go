@@ -171,7 +171,8 @@ func toVirtualPhysicalMappingFromString(virtualPhysicalMapping string) (core.Vir
 		return core.VirtualPhysicalMappingRaw{}, err
 	}
 	vpm := core.VirtualPhysicalMappingRaw(d)
-	zap.L().Debug(fmt.Sprintf("converted virtual physical mapping:%v", vpm))
+	// Log the mapping as a string instead of potentially base64 encoded bytes
+	zap.L().Debug(fmt.Sprintf("converted virtual physical mapping:%s", string(vpm)))
 	return vpm, nil
 }
 
