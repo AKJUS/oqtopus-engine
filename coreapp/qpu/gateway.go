@@ -289,7 +289,7 @@ func (q *DefaultGatewayAgent) updateDevice(di *core.DeviceInfo) error {
 	params := api.PatchDeviceParams{
 		DeviceID: q.setting.DeviceId,
 	}
-	zap.L().Debug(fmt.Sprintf("device update to %s", di))
+	zap.L().Debug(fmt.Sprintf("MaxQubits update to %d", di.MaxQubits))
 	res, err := q.apiClient.PatchDevice(context.TODO(), req, params)
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("failed to update device/reason:%s", err))
