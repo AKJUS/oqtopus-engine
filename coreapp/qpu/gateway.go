@@ -147,6 +147,8 @@ func (q *DefaultGatewayAgent) CallJob(j core.Job) error {
 		qasmToBeSent = j.JobData().TranspiledQASM
 	}
 
+	zap.L().Debug(fmt.Sprintf("Sending a job to QPU/"+
+		"JobID:%s, Shots:%d,QASM:%s", j.JobData().ID, j.JobData().Shots, qasmToBeSent))
 	startTime := time.Now()
 	resp, err := q.gatewayClient.CallJob(q.ctx, &qint.CallJobRequest{
 		JobId:   j.JobData().ID,
