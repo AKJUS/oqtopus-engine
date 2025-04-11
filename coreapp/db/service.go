@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"reflect"
 
@@ -178,14 +177,7 @@ func (s *ServiceDB) Update(j core.Job) error {
 					Message:         api.NewOptNilString(cJob.JobInfo.Message.Value),
 				}),
 		})
-	vpmRaw := j.JobData().Result.TranspilerInfo.VirtualPhysicalMappingRaw.String()
-	decodedVPM, err := base64.StdEncoding.DecodeString(vpmRaw)
-	vpmStr := ""
-	if err != nil {
-		vpmStr = fmt.Sprintf("base64_decode_error(%s): %s", err, vpmRaw)
-	} else {
-		vpmStr = string(decodedVPM)
-	}
+	vpmStr := j.JobData().Result.TranspilerInfo.VirtualPhysicalMappingRaw.String()
 	zap.L().Debug(fmt.Sprintf(
 		"JobsUpdateJobInfoRequest/JobID:%s/Status:%s/Message:%s/StatsRaw:%v/TranspiledQASM:%s/VirtualPhysicalMappingDecoded:%s",
 		jid, cJob.Status, cJob.JobInfo.Message.Value, stats, j.JobData().TranspiledQASM,
