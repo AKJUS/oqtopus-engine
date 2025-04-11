@@ -1,8 +1,11 @@
 package qpu
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"time"
 
 	"github.com/oqtopus-team/oqtopus-engine/coreapp/common"
@@ -85,11 +88,22 @@ func (q *DefaultGatewayAgent) Setup() (err error) {
 		return err
 	}
 	q.gatewayAddress = address
-	apiClient, err := common.NewAPIClient(q.setting.APIEndpoint, q.setting.APIKey)
-	if err != nil {
-		zap.L().Error(fmt.Sprintf("failed to create a new API client/reason:%s", err))
+
+	ss := common.NewSecuritySource(q.setting.APIKey)
+	loggingTransport := &loggingRoundTripper{
+		next: http.DefaultTransport,
 	}
+	httpClient := &http.Client{
+		Transport: loggingTransport,
+	}
+	apiClient, err := api.NewClient(q.setting.APIEndpoint, ss, api.WithClient(httpClient))
+	if err != nil {
+		zap.L().Error("Failed to create API client with logging transport", zap.String("endpoint", q.setting.APIEndpoint), zap.Error(err))
+		return fmt.Errorf("failed to create API client: %w", err)
+	}
+	zap.L().Info("API Client created with local logging transport", zap.String("endpoint", q.setting.APIEndpoint))
 	q.apiClient = apiClient
+
 	q.Reset()
 	return nil
 }
@@ -209,7 +223,7 @@ func (q *DefaultGatewayAgent) GetAddress() string {
 	return q.gatewayAddress
 }
 
-func (q *DefaultGatewayAgent) callDeviceAPIOnChange(newDI *core.DeviceInfo) {
+func (q *DefaultGatewayAgent) callDeviceAPIOnChange(newDI *core.DeviceInfo) { // Renamed function definition
 	updated := false
 	if hasStatusChanged(q.lastDeviceInfo, newDI) {
 		if err := q.updateDeviceStatus(newDI.Status); err != nil {
@@ -246,14 +260,20 @@ func (q *DefaultGatewayAgent) updateDeviceStatus(st core.DeviceStatus) error {
 	params := api.PatchDeviceStatusParams{
 		DeviceID: q.setting.DeviceId,
 	}
-	zap.L().Debug(fmt.Sprintf("status update to %s", st))
-	res, err := q.apiClient.PatchDeviceStatus(context.TODO(), req, params)
-	if err != nil {
-		zap.L().Error(fmt.Sprintf("failed to update device status/reason:%s", err))
+	zap.L().Debug("Attempting to update device status", zap.String("deviceID", params.DeviceID), zap.String("status", string(apiSt)))
+	_, patchErr := q.apiClient.PatchDeviceStatus(context.TODO(), req, params)
+	if patchErr != nil {
+		// Logging of status code and body is handled by loggingRoundTripper
+		zap.L().Error("API call to update device status failed",
+			zap.String("deviceID", params.DeviceID),
+			zap.String("status", string(apiSt)),
+			zap.Error(patchErr), // Log the correct error variable
+		)
 	} else {
-		zap.L().Debug(fmt.Sprintf("updated device status %v", res))
+		// Logging of success details is handled by loggingRoundTripper
+		zap.L().Info("Successfully initiated device status update", zap.String("deviceID", params.DeviceID))
 	}
-	return err
+	return patchErr // Return the correct error variable
 }
 
 func (q *DefaultGatewayAgent) updateDeviceInfo(di *core.DeviceInfo) error {
@@ -271,14 +291,19 @@ func (q *DefaultGatewayAgent) updateDeviceInfo(di *core.DeviceInfo) error {
 	params := api.PatchDeviceInfoParams{
 		DeviceID: q.setting.DeviceId,
 	}
-	zap.L().Debug(fmt.Sprintf("calibrated at update to %s", caStr))
-	res, err := q.apiClient.PatchDeviceInfo(context.TODO(), req, params)
-	if err != nil {
-		zap.L().Error(fmt.Sprintf("failed to update device info/reason:%s", err))
+	zap.L().Debug("Attempting to update device info", zap.String("deviceID", params.DeviceID), zap.Time("calibratedAt", caStr), zap.String("deviceInfoSpec", di.DeviceInfoSpecJson))
+	_, patchErr := q.apiClient.PatchDeviceInfo(context.TODO(), req, params)
+	if patchErr != nil {
+		zap.L().Error("API call to update device info failed",
+			zap.String("deviceID", params.DeviceID),
+			zap.Time("calibratedAt", caStr),
+			zap.String("deviceInfoSpec", di.DeviceInfoSpecJson),
+			zap.Error(patchErr), // Log the correct error variable
+		)
 	} else {
-		zap.L().Debug(fmt.Sprintf("updated device info %v", res))
+		zap.L().Info("Successfully initiated device info update", zap.String("deviceID", params.DeviceID))
 	}
-	return err
+	return patchErr // Return the correct error variable
 }
 
 func (q *DefaultGatewayAgent) updateDevice(di *core.DeviceInfo) error {
@@ -289,14 +314,18 @@ func (q *DefaultGatewayAgent) updateDevice(di *core.DeviceInfo) error {
 	params := api.PatchDeviceParams{
 		DeviceID: q.setting.DeviceId,
 	}
-	zap.L().Debug(fmt.Sprintf("MaxQubits update to %d", di.MaxQubits))
-	res, err := q.apiClient.PatchDevice(context.TODO(), req, params)
-	if err != nil {
-		zap.L().Error(fmt.Sprintf("failed to update device/reason:%s", err))
+	zap.L().Debug("Attempting to update device", zap.String("deviceID", params.DeviceID), zap.Int("maxQubits", di.MaxQubits))
+	_, patchErr := q.apiClient.PatchDevice(context.TODO(), req, params)
+	if patchErr != nil {
+		zap.L().Error("API call to update device failed",
+			zap.String("deviceID", params.DeviceID),
+			zap.Int("maxQubits", di.MaxQubits),
+			zap.Error(patchErr),
+		)
 	} else {
-		zap.L().Debug(fmt.Sprintf("updated device %v", res))
+		zap.L().Info("Successfully initiated device update", zap.String("deviceID", params.DeviceID))
 	}
-	return err
+	return patchErr
 }
 
 func toDeviceDeviceStatusUpdateStatus(ds core.DeviceStatus) api.DevicesDeviceStatusUpdateStatus {
@@ -389,4 +418,33 @@ func hasDeviceChanged(oldDI, newDI *core.DeviceInfo) bool {
 		return true
 	}
 	return false
+}
+
+type loggingRoundTripper struct {
+	next http.RoundTripper
+}
+
+func (lrt *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	resp, err := lrt.next.RoundTrip(req)
+	if err != nil {
+		zap.L().Error("API roundtrip failed", zap.String("url", req.URL.String()), zap.Error(err))
+		return nil, err
+	}
+
+	bodyBytes, readErr := io.ReadAll(resp.Body)
+	if readErr != nil {
+		zap.L().Error("Failed to read API response body", zap.Error(readErr), zap.Int("statusCode", resp.StatusCode), zap.String("url", req.URL.String()))
+		resp.Body.Close()
+		return resp, nil
+	}
+	resp.Body.Close()
+
+	zap.L().Debug("Received API response",
+		zap.String("url", req.URL.String()),
+		zap.Int("statusCode", resp.StatusCode),
+		zap.ByteString("responseBody", bodyBytes),
+	)
+
+	resp.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+	return resp, nil
 }
