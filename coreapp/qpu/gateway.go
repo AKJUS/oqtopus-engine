@@ -125,19 +125,7 @@ func (q *DefaultGatewayAgent) CallDeviceInfo() (*core.DeviceInfo, error) {
 		zap.L().Error(fmt.Sprintf("failed to get service status from %s/reason:%s", q.gatewayAddress, err))
 		return &core.DeviceInfo{}, err
 	}
-	// TODO functionize
-	var ds core.DeviceStatus
-	ss := resSS.GetServiceStatus()
-	switch ss {
-	case qint.ServiceStatus_SERVICE_STATUS_ACTIVE:
-		ds = core.Available
-	case qint.ServiceStatus_SERVICE_STATUS_INACTIVE:
-		ds = core.Unavailable
-	case qint.ServiceStatus_SERVICE_STATUS_MAINTENANCE:
-		ds = core.QueuePaused
-	default:
-		zap.L().Error(fmt.Sprintf("unknown service status %d", ss))
-	}
+	ds := mapServiceStatusToDeviceStatus(resSS.GetServiceStatus())
 
 	cd := &core.DeviceInfo{
 		DeviceName:         di.DeviceId,
@@ -151,6 +139,20 @@ func (q *DefaultGatewayAgent) CallDeviceInfo() (*core.DeviceInfo, error) {
 	}
 	q.callDeviceAPIOnChange(cd)
 	return cd, nil
+}
+
+func mapServiceStatusToDeviceStatus(ss qint.ServiceStatus) core.DeviceStatus {
+	switch ss {
+	case qint.ServiceStatus_SERVICE_STATUS_ACTIVE:
+		return core.Available
+	case qint.ServiceStatus_SERVICE_STATUS_INACTIVE:
+		return core.Unavailable
+	case qint.ServiceStatus_SERVICE_STATUS_MAINTENANCE:
+		return core.QueuePaused
+	default:
+		zap.L().Error(fmt.Sprintf("unknown service status %d, treating as Unavailable", ss))
+		return core.Unavailable // Default to Unavailable for unknown status
+	}
 }
 
 func (q *DefaultGatewayAgent) CallJob(j core.Job) error {
@@ -263,17 +265,15 @@ func (q *DefaultGatewayAgent) updateDeviceStatus(st core.DeviceStatus) error {
 	zap.L().Debug("Attempting to update device status", zap.String("deviceID", params.DeviceID), zap.String("status", string(apiSt)))
 	_, patchErr := q.apiClient.PatchDeviceStatus(context.TODO(), req, params)
 	if patchErr != nil {
-		// Logging of status code and body is handled by loggingRoundTripper
 		zap.L().Error("API call to update device status failed",
 			zap.String("deviceID", params.DeviceID),
 			zap.String("status", string(apiSt)),
-			zap.Error(patchErr), // Log the correct error variable
+			zap.Error(patchErr),
 		)
 	} else {
-		// Logging of success details is handled by loggingRoundTripper
 		zap.L().Info("Successfully initiated device status update", zap.String("deviceID", params.DeviceID))
 	}
-	return patchErr // Return the correct error variable
+	return patchErr
 }
 
 func (q *DefaultGatewayAgent) updateDeviceInfo(di *core.DeviceInfo) error {
@@ -298,12 +298,12 @@ func (q *DefaultGatewayAgent) updateDeviceInfo(di *core.DeviceInfo) error {
 			zap.String("deviceID", params.DeviceID),
 			zap.Time("calibratedAt", caStr),
 			zap.String("deviceInfoSpec", di.DeviceInfoSpecJson),
-			zap.Error(patchErr), // Log the correct error variable
+			zap.Error(patchErr),
 		)
 	} else {
 		zap.L().Info("Successfully initiated device info update", zap.String("deviceID", params.DeviceID))
 	}
-	return patchErr // Return the correct error variable
+	return patchErr
 }
 
 func (q *DefaultGatewayAgent) updateDevice(di *core.DeviceInfo) error {
