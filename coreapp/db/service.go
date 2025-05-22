@@ -76,8 +76,14 @@ func (s *ServiceDB) Update(j core.Job) error {
 	jd := j.JobData()
 	jid := jd.ID
 	cJob := oas.ConvertToCloudJob(jd)
-	zap.L().Debug(fmt.Sprintf("Updating %s/status:%s/Transpiler:%v",
-		jid, cJob.Status, jd.Transpiler))
+	var transpilerOptions string
+	if jd.Transpiler != nil && jd.Transpiler.TranspilerOptions != nil {
+		transpilerOptions = string(jd.Transpiler.TranspilerOptions)
+	} else {
+		transpilerOptions = "<nil>" // nil is not marshaled
+	}
+	zap.L().Debug(fmt.Sprintf("Updating %s/status:%s/TranspilerOptions:%s",
+		jid, cJob.Status, transpilerOptions))
 	ctx := context.Background()
 	//TODO: fix this ad hoc impl
 	if !j.JobData().UseJobInfoUpdate {
@@ -171,10 +177,11 @@ func (s *ServiceDB) Update(j core.Job) error {
 					Message:         api.NewOptNilString(cJob.JobInfo.Message.Value),
 				}),
 		})
+	vpmStr := string(j.JobData().Result.TranspilerInfo.VirtualPhysicalMappingRaw)
 	zap.L().Debug(fmt.Sprintf(
-		"JobsUpdateJobInfoRequest/JobID:%s/Status:%s/Message:%s/StatsRaw:%v/TranspiledQASM:%s/VirtualPhysicalMapping:%s",
+		"JobsUpdateJobInfoRequest/JobID:%s/Status:%s/Message:%s/StatsRaw:%v/TranspiledQASM:%s/VirtualPhysicalMappingDecoded:%s",
 		jid, cJob.Status, cJob.JobInfo.Message.Value, stats, j.JobData().TranspiledQASM,
-		j.JobData().Result.TranspilerInfo.VirtualPhysicalMappingRaw.String()))
+		vpmStr))
 	params := api.PatchJobInfoParams{JobID: jid}
 	patchRes, patchErr := s.client.PatchJobInfo(ctx, req, params)
 	if patchErr != nil {
