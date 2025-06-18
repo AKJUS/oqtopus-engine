@@ -3,7 +3,6 @@
 # source: estimation_interface/v1/estimator.proto
 # Protobuf Python Version: 5.26.1
 """Generated protocol buffer code."""
-
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import symbol_database as _symbol_database
@@ -13,34 +12,30 @@ from google.protobuf.internal import builder as _builder
 _sym_db = _symbol_database.Default()
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\'estimation_interface/v1/estimator.proto\x12\x17\x65stimation_interface.v1"\x9f\x01\n\x1eReqEstimationPreProcessRequest\x12\x1b\n\tqasm_code\x18\x01 \x01(\tR\x08qasmCode\x12\x1c\n\toperators\x18\x02 \x01(\tR\toperators\x12\x1f\n\x0b\x62\x61sis_gates\x18\x03 \x03(\tR\nbasisGates\x12!\n\x0cmapping_list\x18\x04 \x03(\rR\x0bmappingList"m\n\x1fReqEstimationPreProcessResponse\x12\x1d\n\nqasm_codes\x18\x01 \x03(\tR\tqasmCodes\x12+\n\x11grouped_operators\x18\x02 \x01(\tR\x10groupedOperators"\x88\x01\n\x06\x43ounts\x12\x43\n\x06\x63ounts\x18\x01 \x03(\x0b\x32+.estimation_interface.v1.Counts.CountsEntryR\x06\x63ounts\x1a\x39\n\x0b\x43ountsEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n\x05value\x18\x02 \x01(\rR\x05value:\x02\x38\x01"\x87\x01\n\x1fReqEstimationPostProcessRequest\x12\x37\n\x06\x63ounts\x18\x01 \x03(\x0b\x32\x1f.estimation_interface.v1.CountsR\x06\x63ounts\x12+\n\x11grouped_operators\x18\x02 \x01(\tR\x10groupedOperators"N\n ReqEstimationPostProcessResponse\x12\x16\n\x06\x65xpval\x18\x01 \x01(\x02R\x06\x65xpval\x12\x12\n\x04stds\x18\x02 \x01(\x02R\x04stds2\xb7\x02\n\x14\x45stimationJobService\x12\x8c\x01\n\x17ReqEstimationPreProcess\x12\x37.estimation_interface.v1.ReqEstimationPreProcessRequest\x1a\x38.estimation_interface.v1.ReqEstimationPreProcessResponse\x12\x8f\x01\n\x18ReqEstimationPostProcess\x12\x38.estimation_interface.v1.ReqEstimationPostProcessRequest\x1a\x39.estimation_interface.v1.ReqEstimationPostProcessResponseB\xe1\x01\n\x1b\x63om.estimation_interface.v1B\x0e\x45stimatorProtoP\x01Z9estimation/estimation_interface/v1;estimation_interfacev1\xa2\x02\x03\x45XX\xaa\x02\x16\x45stimationInterface.V1\xca\x02\x16\x45stimationInterface\\V1\xe2\x02"EstimationInterface\\V1\\GPBMetadata\xea\x02\x17\x45stimationInterface::V1b\x06proto3'
-)
+
+
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\'estimation_interface/v1/estimator.proto\x12\x17\x65stimation_interface.v1\"\x9f\x01\n\x1eReqEstimationPreProcessRequest\x12\x1b\n\tqasm_code\x18\x01 \x01(\tR\x08qasmCode\x12\x1c\n\toperators\x18\x02 \x01(\tR\toperators\x12\x1f\n\x0b\x62\x61sis_gates\x18\x03 \x03(\tR\nbasisGates\x12!\n\x0cmapping_list\x18\x04 \x03(\rR\x0bmappingList\"m\n\x1fReqEstimationPreProcessResponse\x12\x1d\n\nqasm_codes\x18\x01 \x03(\tR\tqasmCodes\x12+\n\x11grouped_operators\x18\x02 \x01(\tR\x10groupedOperators\"\x88\x01\n\x06\x43ounts\x12\x43\n\x06\x63ounts\x18\x01 \x03(\x0b\x32+.estimation_interface.v1.Counts.CountsEntryR\x06\x63ounts\x1a\x39\n\x0b\x43ountsEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n\x05value\x18\x02 \x01(\rR\x05value:\x02\x38\x01\"\x87\x01\n\x1fReqEstimationPostProcessRequest\x12\x37\n\x06\x63ounts\x18\x01 \x03(\x0b\x32\x1f.estimation_interface.v1.CountsR\x06\x63ounts\x12+\n\x11grouped_operators\x18\x02 \x01(\tR\x10groupedOperators\"N\n ReqEstimationPostProcessResponse\x12\x16\n\x06\x65xpval\x18\x01 \x01(\x02R\x06\x65xpval\x12\x12\n\x04stds\x18\x02 \x01(\x02R\x04stds2\xb7\x02\n\x14\x45stimationJobService\x12\x8c\x01\n\x17ReqEstimationPreProcess\x12\x37.estimation_interface.v1.ReqEstimationPreProcessRequest\x1a\x38.estimation_interface.v1.ReqEstimationPreProcessResponse\x12\x8f\x01\n\x18ReqEstimationPostProcess\x12\x38.estimation_interface.v1.ReqEstimationPostProcessRequest\x1a\x39.estimation_interface.v1.ReqEstimationPostProcessResponseB\xe1\x01\n\x1b\x63om.estimation_interface.v1B\x0e\x45stimatorProtoP\x01Z9estimation/estimation_interface/v1;estimation_interfacev1\xa2\x02\x03\x45XX\xaa\x02\x16\x45stimationInterface.V1\xca\x02\x16\x45stimationInterface\\V1\xe2\x02\"EstimationInterface\\V1\\GPBMetadata\xea\x02\x17\x45stimationInterface::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
-_builder.BuildTopDescriptorsAndMessages(
-    DESCRIPTOR, "estimation_interface.v1.estimator_pb2", _globals
-)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'estimation_interface.v1.estimator_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
-    _globals["DESCRIPTOR"]._loaded_options = None
-    _globals[
-        "DESCRIPTOR"
-    ]._serialized_options = b'\n\033com.estimation_interface.v1B\016EstimatorProtoP\001Z9estimation/estimation_interface/v1;estimation_interfacev1\242\002\003EXX\252\002\026EstimationInterface.V1\312\002\026EstimationInterface\\V1\342\002"EstimationInterface\\V1\\GPBMetadata\352\002\027EstimationInterface::V1'
-    _globals["_COUNTS_COUNTSENTRY"]._loaded_options = None
-    _globals["_COUNTS_COUNTSENTRY"]._serialized_options = b"8\001"
-    _globals["_REQESTIMATIONPREPROCESSREQUEST"]._serialized_start = 69
-    _globals["_REQESTIMATIONPREPROCESSREQUEST"]._serialized_end = 228
-    _globals["_REQESTIMATIONPREPROCESSRESPONSE"]._serialized_start = 230
-    _globals["_REQESTIMATIONPREPROCESSRESPONSE"]._serialized_end = 339
-    _globals["_COUNTS"]._serialized_start = 342
-    _globals["_COUNTS"]._serialized_end = 478
-    _globals["_COUNTS_COUNTSENTRY"]._serialized_start = 421
-    _globals["_COUNTS_COUNTSENTRY"]._serialized_end = 478
-    _globals["_REQESTIMATIONPOSTPROCESSREQUEST"]._serialized_start = 481
-    _globals["_REQESTIMATIONPOSTPROCESSREQUEST"]._serialized_end = 616
-    _globals["_REQESTIMATIONPOSTPROCESSRESPONSE"]._serialized_start = 618
-    _globals["_REQESTIMATIONPOSTPROCESSRESPONSE"]._serialized_end = 696
-    _globals["_ESTIMATIONJOBSERVICE"]._serialized_start = 699
-    _globals["_ESTIMATIONJOBSERVICE"]._serialized_end = 1010
+  _globals['DESCRIPTOR']._loaded_options = None
+  _globals['DESCRIPTOR']._serialized_options = b'\n\033com.estimation_interface.v1B\016EstimatorProtoP\001Z9estimation/estimation_interface/v1;estimation_interfacev1\242\002\003EXX\252\002\026EstimationInterface.V1\312\002\026EstimationInterface\\V1\342\002\"EstimationInterface\\V1\\GPBMetadata\352\002\027EstimationInterface::V1'
+  _globals['_COUNTS_COUNTSENTRY']._loaded_options = None
+  _globals['_COUNTS_COUNTSENTRY']._serialized_options = b'8\001'
+  _globals['_REQESTIMATIONPREPROCESSREQUEST']._serialized_start=69
+  _globals['_REQESTIMATIONPREPROCESSREQUEST']._serialized_end=228
+  _globals['_REQESTIMATIONPREPROCESSRESPONSE']._serialized_start=230
+  _globals['_REQESTIMATIONPREPROCESSRESPONSE']._serialized_end=339
+  _globals['_COUNTS']._serialized_start=342
+  _globals['_COUNTS']._serialized_end=478
+  _globals['_COUNTS_COUNTSENTRY']._serialized_start=421
+  _globals['_COUNTS_COUNTSENTRY']._serialized_end=478
+  _globals['_REQESTIMATIONPOSTPROCESSREQUEST']._serialized_start=481
+  _globals['_REQESTIMATIONPOSTPROCESSREQUEST']._serialized_end=616
+  _globals['_REQESTIMATIONPOSTPROCESSRESPONSE']._serialized_start=618
+  _globals['_REQESTIMATIONPOSTPROCESSRESPONSE']._serialized_end=696
+  _globals['_ESTIMATIONJOBSERVICE']._serialized_start=699
+  _globals['_ESTIMATIONJOBSERVICE']._serialized_end=1010
 # @@protoc_insertion_point(module_scope)

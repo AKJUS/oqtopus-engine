@@ -6,7 +6,7 @@ managed:
       value: multiprog/manual
 plugins:
   # python
-  - remote: buf.build/grpc/python:v1.65.1
+  - remote: buf.build/grpc/python:v1.73.0
     out: ../circuit_combiner/src
   - remote: buf.build/protocolbuffers/python:v26.1
     out: ../circuit_combiner/src
