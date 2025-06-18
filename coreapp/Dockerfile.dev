@@ -1,28 +1,43 @@
 ARG GO_VERSION=1.24
 FROM golang:$GO_VERSION AS builder
 
+# Create appuser with configurable UID and GID to avoid permission issues
+# You can override these values at build time like this:
+#   docker compose build --build-arg UID=$(id -u) --build-arg GID=$(id -g)
+# This ensures that files created in volumes or bind mounts are owned by the correct host user
+ARG UID=1000
+ARG GID=1000
+
+# Install the project into `/app`
 WORKDIR /app
 
-# install tools
+# Install tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  curl \
-  git \
-  iproute2 \
-  procps \
-  tar \
-  vim && \
-  curl -L "https://github.com/fullstorydev/grpcurl/releases/download/v1.9.3/grpcurl_1.9.3_linux_x86_64.tar.gz" | tar -xz -C /usr/local/bin && \
-  chmod +x /usr/local/bin/grpcurl && \
-  apt-get clean && rm -rf /var/lib/apt/lists/*
+    curl \
+    git \
+    iproute2 \
+    iputils-ping \
+    jq \
+    procps \
+    tar \
+    vim \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# setup user
-RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
+# Install grpcurl (gRPC command-line tool)
+ARG GRPCURL_VERSION=1.9.3
+RUN curl -L https://github.com/fullstorydev/grpcurl/releases/download/v${GRPCURL_VERSION}/grpcurl_${GRPCURL_VERSION}_linux_x86_64.tar.gz \
+    | tar -xz -C /usr/local/bin
+
+# Add user
+RUN groupadd -g ${GID} appuser \
+    && useradd -m -u ${UID} -g ${GID} -s /bin/bash -c "" appuser \
+    && chown -R appuser:appuser /app
 USER appuser
 
-COPY . /app
+COPY --chown=appuser:appuser . /app
 
-# build application
+# Build application
 RUN go build -o /go/bin/edge ./cmd/edge/main.go
 
-# run application
+# Run the application
 CMD ["edge", "poller", "--qpu=gateway", "--db=service", "--transpiler=tranqu", "--log-level=debug", "--enable-file-log", "--log-dir=logs", "--dev-mode", "--setting-path=./setting/setting.toml", "--device-setting-path=./setting/device_setting.toml"]
