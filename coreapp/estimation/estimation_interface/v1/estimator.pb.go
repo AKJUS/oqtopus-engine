@@ -26,7 +26,7 @@ type ReqEstimationPreProcessRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	QasmCode    string   `protobuf:"bytes,1,opt,name=qasm_code,json=qasmCode,proto3" json:"qasm_code,omitempty"`                  // e.g. "OPENQASM 3.0;\ninclude \"stdgates.inc\";\nqubit[2] q;\nh q[0];\ncx q[0], q[1];\n"
-	Operators   string   `protobuf:"bytes,2,opt,name=operators,proto3" json:"operators,omitempty"`                                // e.g. "[[\"X 0 X 1\", [1.5, 0]], [\"Y 0 Z 1\", [1.2, 0]]]"
+	Operators   string   `protobuf:"bytes,2,opt,name=operators,proto3" json:"operators,omitempty"`                                // e.g. "[[\"X 0 X 1\", 1.5], [\"Y 0 Z 1\", 1.2]]"
 	BasisGates  []string `protobuf:"bytes,3,rep,name=basis_gates,json=basisGates,proto3" json:"basis_gates,omitempty"`            // e.g. ["id", "sx", "rz", "rzx"]
 	MappingList []uint32 `protobuf:"varint,4,rep,packed,name=mapping_list,json=mappingList,proto3" json:"mapping_list,omitempty"` // e.g. [2, 1, 0, 3] : means logical qubit 0 mapped into physical qubit 2
 }
