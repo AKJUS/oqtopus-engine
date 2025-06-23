@@ -1,0 +1,4 @@
+device_name = "wako"
+machine_host = "localhost"
+machine_port = "53021"
+qubits_number = 16

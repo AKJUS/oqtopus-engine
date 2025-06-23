@@ -6,7 +6,7 @@ managed:
       value: sse
 plugins:
   # python
-  - remote: buf.build/grpc/python:v1.62.2
+  - remote: buf.build/grpc/python:v1.73.0
     out: ../sse_runtime/src/sse_runtime/sse_sampler
   - remote: buf.build/protocolbuffers/python:v25.1
     out: ../sse_runtime/src/sse_runtime/sse_sampler
