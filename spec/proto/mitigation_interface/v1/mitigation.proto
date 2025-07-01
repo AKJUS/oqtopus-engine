@@ -28,8 +28,7 @@ message DeviceTopology{
 message ReqMitigationRequest{
     DeviceTopology device_topology =1;
     map<string, int32> counts = 2;
-    int32 shots = 3;
-    repeated uint32 measured_qubits = 4;
+    string program = 3;
 }
 
 message ReqMitigationResponse{
