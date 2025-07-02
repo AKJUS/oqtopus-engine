@@ -32,7 +32,7 @@ class ErrorMitigator(mitigator_pb2_grpc.ErrorMitigatorService):
 
         Args:
             request (mitigator_pb2_grpc.request): The gRPC request containing the
-                device_topology, counts, shots and measured_qubits.
+                device_topology, counts, and program.
             context (grpc.ServicerContext): The gRPC context for the request.
         Returns:
             mitigator_pb2_grpc.ReqMitigationResponse: The gRPC response containing the
@@ -41,7 +41,7 @@ class ErrorMitigator(mitigator_pb2_grpc.ErrorMitigatorService):
         try:
             self.logger.info("start ro_error_mitigation-error mitigation process")
             self.logger.debug(
-                "device_topology:%s, counts:%s, shots:%s, measured_qubits:%s",
+                "device_topology:%s, counts:%s, program:%s",
                 request.device_topology,
                 request.counts,
                 request.program,
