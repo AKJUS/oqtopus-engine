@@ -1,25 +1,29 @@
 SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
-.PHONY: help 
+.PHONY: help
 
-build : 
+build :
 	docker compose --env-file .env build
 
-up : 
+up :
 	@if [ ! -d $(SHARE_DIR)/$(LOG_DIR) ]; then \
 		echo ";; mkdir -p $(SHARE_DIR)/$(LOG_DIR)"; mkdir -p $(SHARE_DIR)/$(LOG_DIR); \
 	fi
 	docker compose --env-file .env up -d mitigator
 
-down : 
+down :
 	docker compose --env-file .env down mitigator
 
 ruff :
 	@echo "...checking lint check"
-	@ruff check src
+	@uv run ruff check src/mitigator.py
 	@echo "...checking format check"
-	@ruff format src --diff --check
+	@uv run ruff format src/mitigator.py --diff --check
+
+mypy:
+	@echo "...checking type check"
+	@uv run mypy src/mitigator.py
 
 clean :
 	@rm .venv -rf

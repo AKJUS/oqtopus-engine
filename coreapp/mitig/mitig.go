@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -111,10 +110,8 @@ func PseudoInverseMitigation(jd *core.JobData) {
 	octs := jd.Result.Counts
 	zap.L().Debug(fmt.Sprintf("original counts: %v", octs))
 	cts := make(map[string]int32)
-	shots := int32(0)
 	for k, v := range octs {
 		cts[k] = int32(v)
-		shots += int32(v)
 	}
 	zap.L().Debug(fmt.Sprintf("pre-mitigation counts: %v", cts))
 	dt, err := deviceTopology()
@@ -124,35 +121,18 @@ func PseudoInverseMitigation(jd *core.JobData) {
 		return
 	}
 
-	var pvm core.PhysicalVirtualMapping
-	if len(jd.Result.TranspilerInfo.PhysicalVirtualMapping) == 0 {
-		zap.L().Debug("PhysicalVirtualMapping is nil/use default")
-		pvm = make(core.PhysicalVirtualMapping)
-		for i := 0; i < len(dt.Qubits); i++ {
-			pvm[uint32(i)] = uint32(i)
-		}
+	var prg string
+	if jd.TranspiledQASM == "" {
+		prg = jd.QASM
 	} else {
-		pvm = jd.Result.TranspilerInfo.PhysicalVirtualMapping
+		prg = jd.TranspiledQASM
 	}
-	zap.L().Debug(fmt.Sprintf("PhysicalVirtualMapping: %v", pvm))
-
-	keys := []uint32{}
-	for k := range pvm {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i] < keys[j]
-	})
-	mq := []uint32{}
-	for key := range keys {
-		mq = append(mq, pvm[uint32(key)])
-	}
+	zap.L().Debug(fmt.Sprintf("Program to be sent to mitigator: %s", prg))
 
 	mreq := &pb.ReqMitigationRequest{
 		DeviceTopology: dt,
 		Counts:         cts,
-		Shots:          shots,
-		MeasuredQubits: mq,
+		Program:        prg,
 	}
 	zap.L().Debug(fmt.Sprintf("MitigationJob Request: %v", mreq))
 
@@ -216,8 +196,8 @@ func deviceTopology() (*pb.DeviceTopology, error) {
 			T1:        float32(q.QubitLife.T1),
 			T2:        float32(q.QubitLife.T2),
 			MesError: &pb.MesError{
-				P0M1: float32(q.MeasError.ProbMeas0Prep1),
-				P1M0: float32(q.MeasError.ProbMeas1Prep0),
+				P0M1: float32(q.MeasError.ProbMeas1Prep0),
+				P1M0: float32(q.MeasError.ProbMeas0Prep1),
 			},
 		}
 		qubitsInDeviceTopology = append(qubitsInDeviceTopology, &mq)
