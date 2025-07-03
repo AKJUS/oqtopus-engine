@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import typing
 from concurrent import futures
 from logging.handlers import TimedRotatingFileHandler
 
@@ -8,6 +9,8 @@ import grpc
 import mitigation_interface.v1.mitigation_pb2 as mitigator_pb2
 import mitigation_interface.v1.mitigation_pb2_grpc as mitigator_pb2_grpc
 import numpy as np
+from qiskit import qasm3
+from qiskit.circuit.quantumcircuitdata import CircuitInstruction
 from qiskit.result import Counts, LocalReadoutMitigator, ProbDistribution
 
 # port number for gRPC server
@@ -29,7 +32,7 @@ class ErrorMitigator(mitigator_pb2_grpc.ErrorMitigatorService):
 
         Args:
             request (mitigator_pb2_grpc.request): The gRPC request containing the
-                device_topology, counts, shots and measured_qubits.
+                device_topology, counts, and program.
             context (grpc.ServicerContext): The gRPC context for the request.
         Returns:
             mitigator_pb2_grpc.ReqMitigationResponse: The gRPC response containing the
@@ -38,18 +41,16 @@ class ErrorMitigator(mitigator_pb2_grpc.ErrorMitigatorService):
         try:
             self.logger.info("start ro_error_mitigation-error mitigation process")
             self.logger.debug(
-                "device_topology:%s, counts:%s, shots:%s, measured_qubits:%s",
+                "device_topology:%s, counts:%s, program:%s",
                 request.device_topology,
                 request.counts,
-                request.shots,
-                request.measured_qubits,
+                request.program,
             )
             device_topology = request.device_topology
             counts = request.counts
-            shots = request.shots
-            measured_qubits = request.measured_qubits
+            program = request.program
             mitigated_counts = self.ro_error_mitigation(
-                device_topology, counts, shots, measured_qubits
+                device_topology, counts, program
             )
             self.logger.debug(
                 "mitigated_counts:%s",
@@ -65,11 +66,12 @@ class ErrorMitigator(mitigator_pb2_grpc.ErrorMitigatorService):
         self,
         device_topology,
         counts,
-        shots,
-        measured_qubits,
+        program,
     ) -> dict[str, int]:
         assignment_matrices = []
         qubits = device_topology.qubits
+        shots = sum(counts.values())
+        measured_qubits = get_measured_qubits(program)
         n_qubits = len(measured_qubits)
 
         # LocalReadoutMitigator (used below) creates a vector of length 2^(#qubits).
@@ -106,6 +108,49 @@ class ErrorMitigator(mitigator_pb2_grpc.ErrorMitigatorService):
         mitigated_counts = {k: int(v * shots) for k, v in bin_prob.items()}
         self.logger.debug("finish error mitigation")
         return mitigated_counts
+
+
+def get_measured_qubits(program: str) -> list[int]:
+    """
+    Extracts the indices of measured qubits from a QASM 3 program string.
+
+    Parses the given QASM 3 program, identifies all measurement operations,
+    and returns a list of qubit indices that are measured, ordered by their corresponding classical bit indices.
+
+    Args:
+        program (str): The QASM 3 program as a string.
+
+    Returns:
+        list[int]: A list of measured qubit indices, ordered by classical bit index.
+    """
+    try:
+        qc = qasm3.loads(program)
+    except Exception as e:
+        raise ValueError(f"Invalid QASM 3 program: {e}")
+
+    # Dictionary mapping classical bit index to qubit index
+    measured_qubits_dict: dict[int, int] = {}
+
+    for _instruction in qc.data:
+        # for type checking
+        instruction = typing.cast(CircuitInstruction, _instruction)
+
+        if instruction.operation.name == "measure":
+            clbits = [clbit._index for clbit in instruction.clbits]
+            qubits = []
+            for qubit in instruction.qubits:
+                bit_info = qc.find_bit(qubit)
+                if bit_info is None:
+                    raise ValueError(f"Qubit {qubit} not found in circuit bits.")
+                qubits.append(bit_info.index)
+            for clbit, qubit in zip(clbits, qubits):
+                measured_qubits_dict[clbit] = qubit
+
+    # sort the measured qubits by classical bit index
+    measured_qubits = [
+        measured_qubits_dict[k] for k in sorted(measured_qubits_dict.keys())
+    ]
+    return measured_qubits
 
 
 # count the number of CPUs in the docker container
