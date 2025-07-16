@@ -275,3 +275,30 @@ func (j *panicInProcessJob) Process() {
 func (j *panicInProcessJob) JobType() string {
 	return PANIC_IN_PROCESS_JOB
 }
+
+func TestRecoverFromPanicInStart(t *testing.T) {
+	nsc := &NormalScheduler{}
+	s := core.SCWithScheduler(nsc)
+	defer s.TearDown()
+	err := s.StartContainer()
+	assert.Nil(t, err)
+
+	// Start the scheduler
+	nsc.Start()
+
+	// Prepare jobs
+	panicJob := testJob(t, PANIC_IN_PROCESS_JOB, core.READY)
+	successJob := testJob(t, SUCCESS_IN_POST_PROCESS_JOB, core.READY)
+
+	var wg sync.WaitGroup
+	wg.Add(2) // We expect two jobs to be handled
+
+	// Use HandleJobForTest to wait for completion
+	go nsc.HandleJobForTest(panicJob, &wg)
+	go nsc.HandleJobForTest(successJob, &wg)
+
+	wg.Wait()
+
+	// Assert that the success job was processed even after the panic job
+	assert.Contains(t, nsc.statusHistory[successJob.JobData().ID], core.SUCCEEDED, "The success job should have SUCCEEDED status")
+}

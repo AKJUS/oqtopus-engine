@@ -33,12 +33,12 @@ func (n *NormalScheduler) Setup(conf *core.Conf) error {
 func (n *NormalScheduler) Start() error {
 	// TODO: functionalize
 	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				zap.L().Error("recovered from panic in scheduler start", zap.Any("panic", r))
-			}
-		}()
 		for {
+			defer func() {
+				if r := recover(); r != nil {
+					zap.L().Error("recovered from panic in scheduler start", zap.Any("panic", r))
+				}
+			}()
 			zap.L().Debug("checking the queue...")
 			jis, err := n.queue.Dequeue(true)
 			jid := jis.job.JobData().ID
