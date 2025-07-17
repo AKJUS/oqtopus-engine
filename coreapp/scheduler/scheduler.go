@@ -142,13 +142,7 @@ func (n *NormalScheduler) handleImpl(j core.Job) {
 			finished: &wg,
 		}
 		n.queue.queueChan <- jis
-		wg.Wait() // wait for processing
-		if j.JobData().Status == core.FAILED {
-			n.mu.Lock()
-			n.statusHistory[j.JobData().ID] = append(n.statusHistory[j.JobData().ID], core.FAILED)
-			n.mu.Unlock()
-			return
-		}
+		wg.Wait()                           // wait for processing
 		j.JobData().UseJobInfoUpdate = true //TODO: fix this adhoc
 		zap.L().Debug(fmt.Sprintf("Processed Job Status: %s", j.JobData().Status))
 		if j.IsFinished() {
