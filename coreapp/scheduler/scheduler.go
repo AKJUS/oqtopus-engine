@@ -34,29 +34,35 @@ func (n *NormalScheduler) Start() error {
 	// TODO: functionalize
 	go func() {
 		for {
-			defer func() {
-				if r := recover(); r != nil {
-					zap.L().Error("recovered from panic in scheduler start", zap.Any("panic", r))
-				}
-			}()
 			zap.L().Debug("checking the queue...")
 			jis, err := n.queue.Dequeue(true)
-			jid := jis.job.JobData().ID
 			if err != nil {
-				zap.L().Error(fmt.Sprintf("failed to get job(%s) from queue. Reason:%s", jid, err))
+				zap.L().Error(fmt.Sprintf("failed to get job from queue. Reason:%s", err))
 				continue
 			}
+			jid := jis.job.JobData().ID
 			zap.L().Debug(fmt.Sprintf("processing job:%s", jid))
-			// TODO: not update status in scheduler
-			st := core.RUNNING
-			n.mu.Lock()
-			n.statusHistory[jid] = append(n.statusHistory[jid], st)
-			n.mu.Unlock()
-			jis.job.JobData().Status = st
-			jis.job.JobContext().DBChan <- jis.job.Clone()
-			jis.job.Process()
-			zap.L().Debug(fmt.Sprintf("finished to process job(%s), status:%s", jid, jis.job.JobData().Status))
-			jis.finished.Done()
+
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						zap.L().Error("recovered from panic in scheduler start", zap.String("jobID", jid), zap.Any("panic", r))
+						jis.job.JobData().Status = core.FAILED
+						jis.job.JobContext().DBChan <- jis.job.Clone()
+					}
+					jis.finished.Done()
+				}()
+
+				// TODO: not update status in scheduler
+				st := core.RUNNING
+				n.mu.Lock()
+				n.statusHistory[jid] = append(n.statusHistory[jid], st)
+				n.mu.Unlock()
+				jis.job.JobData().Status = st
+				jis.job.JobContext().DBChan <- jis.job.Clone()
+				jis.job.Process()
+				zap.L().Debug(fmt.Sprintf("finished to process job(%s), status:%s", jid, jis.job.JobData().Status))
+			}()
 		}
 	}()
 	// TODO connected Channel
@@ -91,6 +97,17 @@ func (n *NormalScheduler) HandleJobForTest(j core.Job, wg *sync.WaitGroup) {
 }
 
 func (n *NormalScheduler) handleImpl(j core.Job) {
+	defer func() {
+		if r := recover(); r != nil {
+			zap.L().Error("recovered from panic in handle impl", zap.String("jobID", j.JobData().ID), zap.Any("panic", r))
+			j.JobData().Status = core.FAILED
+			n.mu.Lock()
+			n.statusHistory[j.JobData().ID] = append(n.statusHistory[j.JobData().ID], core.FAILED)
+			n.mu.Unlock()
+			j.JobContext().DBChan <- j.Clone()
+		}
+	}()
+
 	for {
 		jid := j.JobData().ID
 		j.JobData().UseJobInfoUpdate = false //very adhoc
@@ -125,7 +142,13 @@ func (n *NormalScheduler) handleImpl(j core.Job) {
 			finished: &wg,
 		}
 		n.queue.queueChan <- jis
-		wg.Wait()                           // wait for processing
+		wg.Wait() // wait for processing
+		if j.JobData().Status == core.FAILED {
+			n.mu.Lock()
+			n.statusHistory[j.JobData().ID] = append(n.statusHistory[j.JobData().ID], core.FAILED)
+			n.mu.Unlock()
+			return
+		}
 		j.JobData().UseJobInfoUpdate = true //TODO: fix this adhoc
 		zap.L().Debug(fmt.Sprintf("Processed Job Status: %s", j.JobData().Status))
 		if j.IsFinished() {
