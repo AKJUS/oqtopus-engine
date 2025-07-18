@@ -19,6 +19,7 @@ const FAILED_IN_PRE_PROCESS_JOB = "FAILED_in_pre_process_job"
 const FAILED_IN_PROCESS_JOB = "FAILED_in_process_job"
 const FAILED_IN_POST_PROCESS_JOB = "FAILED_in_post_process_job"
 const SUCCESS_IN_POST_PROCESS_JOB = "success_in_post_process_job"
+const PANIC_IN_PROCESS_JOB = "panic_in_process_job"
 
 func TestMain(m *testing.M) {
 	jm, _ = core.NewJobManager(
@@ -26,7 +27,9 @@ func TestMain(m *testing.M) {
 		&FAILEDInPreProcessJob{},
 		&FAILEDInProcessJob{},
 		&FAILEDInPostProcessJob{},
-		&successInPostProcessJob{})
+		&successInPostProcessJob{},
+		&panicInProcessJob{},
+	)
 	m.Run()
 }
 
@@ -105,6 +108,15 @@ func TestHandleJob(t *testing.T) {
 				core.READY,
 				core.RUNNING,
 				core.SUCCEEDED,
+			},
+		},
+		{
+			name: "recover from panic in process",
+			job:  testJob(t, PANIC_IN_PROCESS_JOB, core.READY),
+			wantStatusSlice: []core.Status{
+				core.READY,
+				core.RUNNING,
+				core.FAILED, // The job panics, so it should end in FAILED
 			},
 		},
 	}
@@ -238,4 +250,23 @@ func printStatusSlice(ss []core.Status) string {
 		s += fmt.Sprintf("  %v,\n", status)
 	}
 	return s + "]"
+}
+
+type panicInProcessJob struct {
+	*core.UnimplementedJob
+}
+
+func (j *panicInProcessJob) New(jd *core.JobData, jc *core.JobContext) core.Job {
+	u := &core.UnimplementedJob{}
+	return &panicInProcessJob{
+		UnimplementedJob: u.New(jd, jc).(*core.UnimplementedJob),
+	}
+}
+
+func (j *panicInProcessJob) Process() {
+	panic("panic in process")
+}
+
+func (j *panicInProcessJob) JobType() string {
+	return PANIC_IN_PROCESS_JOB
 }

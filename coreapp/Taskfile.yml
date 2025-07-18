@@ -78,7 +78,7 @@ tasks:
   unit-test:
     desc: "Run go test. You can use CLI_ARGS to pass additiohnal options to go test command"
     cmds:
-      - go test -failfast ./... -tags=unit -timeout 10s {{.CLI_ARGS}}
+      - go test -race -failfast ./... -tags=unit -timeout 10s {{.CLI_ARGS}}
   unit-test-all:
     desc: "Go and Python test"
     cmds:
