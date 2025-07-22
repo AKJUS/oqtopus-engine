@@ -7,15 +7,14 @@ import (
 	"go.uber.org/zap"
 )
 
-var dbMap map[string]Job
-
 type MemoryDB struct {
+	dbMap  map[string]Job
 	dbChan <-chan Job
 	mu     sync.RWMutex
 }
 
 func (d *MemoryDB) Setup(dbc DBChan, c *Conf) error {
-	dbMap = make(map[string]Job)
+	d.dbMap = make(map[string]Job)
 	d.dbChan = dbc
 	go func() {
 		for {
@@ -36,14 +35,14 @@ func (d *MemoryDB) Setup(dbc DBChan, c *Conf) error {
 func (d *MemoryDB) Insert(j Job) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	dbMap[j.JobData().ID] = j
+	d.dbMap[j.JobData().ID] = j
 	return nil
 }
 
 func (d *MemoryDB) Get(jobID string) (Job, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	if val, ok := dbMap[jobID]; ok {
+	if val, ok := d.dbMap[jobID]; ok {
 		return val, nil
 	}
 	err := fmt.Errorf("not found %s", jobID)
@@ -54,15 +53,15 @@ func (d *MemoryDB) Get(jobID string) (Job, error) {
 func (d *MemoryDB) Update(j Job) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	dbMap[j.JobData().ID] = j
+	d.dbMap[j.JobData().ID] = j
 	return nil
 }
 
 func (d *MemoryDB) Delete(jobID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	if _, ok := dbMap[jobID]; ok {
-		delete(dbMap, jobID)
+	if _, ok := d.dbMap[jobID]; ok {
+		delete(d.dbMap, jobID)
 		zap.L().Info(fmt.Sprintf("[MemoryDB] deleted %s from DB", jobID))
 		return nil
 	}
@@ -74,7 +73,7 @@ func (d *MemoryDB) Delete(jobID string) error {
 func (d *MemoryDB) UpdateQASM(jobID string, qasm_str string) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	job := dbMap[jobID]
+	job := d.dbMap[jobID]
 	job.JobData().QASM = qasm_str
-	dbMap[jobID] = job
+	d.dbMap[jobID] = job
 }
