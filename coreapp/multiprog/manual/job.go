@@ -102,19 +102,6 @@ func (j *ManualJob) preProcessImpl() (err error) {
 	err = nil
 	jd := j.JobData()
 	container := core.GetSystemComponents().Container
-	if jd.NeedTranspiling() {
-		err = container.Invoke(
-			func(t core.Transpiler) error {
-				return t.Transpile(j)
-			})
-		if err != nil {
-			zap.L().Error(fmt.Sprintf("failed to transpile a job(%s). Reason:%s", jd.ID, err.Error()))
-			return
-		}
-	} else {
-		zap.L().Debug(fmt.Sprintf("skip transpiling a job(%s)/Transpiler:%v",
-			jd.ID, jd.Transpiler))
-	}
 	err = container.Invoke(
 		func(d core.DBManager) error {
 			return d.Insert(j)
