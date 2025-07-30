@@ -134,7 +134,7 @@ func DEFAULT_TRANSPILER_CONFIG() *TranspilerConfig {
 		OptimizationLevel int `json:"optimization_level"`
 	}
 	dtp := DefaultTranspilerOptions{
-		OptimizationLevel: 2,
+		OptimizationLevel: 1,
 	}
 	dtpByte, err := json.Marshal(dtp)
 	if err != nil {
