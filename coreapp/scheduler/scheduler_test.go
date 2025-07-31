@@ -13,39 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// for test
-type statusHistory map[string][]core.Status
-type testStatusManager struct {
-	statusHistory statusHistory
-	mu            sync.RWMutex
-}
-
-func newTestStatusManager() *testStatusManager {
-	return &testStatusManager{
-		statusHistory: make(statusHistory),
-		mu:            sync.RWMutex{},
-	}
-}
-
-func (t *testStatusManager) Update(job core.Job, status core.Status) {
-	job.JobData().Status = status
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	t.statusHistory[job.JobData().ID] = append(t.statusHistory[job.JobData().ID], status)
-}
-
-func (t *testStatusManager) Delete(jobID string) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	delete(t.statusHistory, jobID)
-}
-
-func (t *testStatusManager) Get(jobID string) []core.Status {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-	return t.statusHistory[jobID]
-}
-
 var jm *core.JobManager
 
 const FAILED_IN_PRE_PROCESS_JOB = "FAILED_in_pre_process_job"
@@ -72,7 +39,6 @@ func TestHandleJob(t *testing.T) {
 	defer s.TearDown()
 	err := s.StartContainer()
 	assert.Nil(t, err)
-	nsc.statusManager = newTestStatusManager()
 
 	tests := []struct {
 		name            string
@@ -165,11 +131,11 @@ func TestHandleJob(t *testing.T) {
 			assert.Equal(
 				t,
 				tt.wantStatusSlice,
-				nsc.statusManager.Get(jobID),
+				nsc.statusHistory[jobID],
 				fmt.Sprintf(
 					"expected status slice:%s\n actual status slice:%s\n",
 					printStatusSlice(tt.wantStatusSlice),
-					printStatusSlice(nsc.statusManager.Get(jobID))))
+					printStatusSlice(nsc.statusHistory[jobID])))
 		})
 	}
 }
