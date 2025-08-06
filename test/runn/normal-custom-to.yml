@@ -27,7 +27,7 @@ steps:
                transpiler_lib: qiskit
                transpiler_options:
                   "initial_layout": [0, 1]
-   test: | 
+   test: |
      current.res.status == 200
    dump:
      expr: current.res.body.job_id + "(normal job with customized TO) is posted"
@@ -49,4 +49,6 @@ steps:
     test: |
       steps.wait.res.body.status == "succeeded"
       && steps.wait.res.body.transpiler_info.transpiler_options.initial_layout == [0, 1]
-
+  results:
+    dump:
+      expr: 'steps.post.res.body.job_id + " is " + steps.wait.res.body.status + " at " + now().Format("2006-01-02 15:04:05")'

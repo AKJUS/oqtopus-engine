@@ -47,3 +47,6 @@ steps:
   check-transpiler-lib:
     test: |
       steps.wait.res.body.transpiler_info.transpiler_lib == null
+  results:
+    dump:
+      expr: 'steps.post.res.body.job_id + " is " + steps.wait.res.body.status + " at " + now().Format("2006-01-02 15:04:05")'

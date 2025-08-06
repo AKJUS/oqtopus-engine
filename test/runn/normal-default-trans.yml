@@ -51,3 +51,6 @@ steps:
   check-transpiler-options:
     test: |
       steps.wait.res.body.transpiler_info.transpiler_options.optimization_level == 1
+  results:
+    dump:
+      expr: 'steps.post.res.body.job_id + " is " + steps.wait.res.body.status + " at " + now().Format("2006-01-02 15:04:05")'
