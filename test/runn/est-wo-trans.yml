@@ -8,7 +8,7 @@ steps:
   post:
     desc: post estimation job without transpiler
     req:
-      /v1/jobs:
+      /jobs:
         post:
           headers:
             q-api-token: "{{ vars.token }}"
@@ -42,7 +42,7 @@ steps:
       test: |
         current.res.body.status == "succeeded"
     req:
-      /v1/jobs/{{steps.post.res.body.job_id}}:
+      /jobs/{{steps.post.res.body.job_id}}:
         get:
           headers:
             q-api-token: "{{ vars.token }}"
