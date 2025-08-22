@@ -346,15 +346,15 @@ func (c *Client) sendGetJobs(ctx context.Context, params GetJobsParams) (res Get
 		}
 	}
 	{
-		// Encode "max_results" parameter.
+		// Encode "limit" parameter.
 		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "max_results",
+			Name:    "limit",
 			Style:   uri.QueryStyleForm,
 			Explode: true,
 		}
 
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.MaxResults.Get(); ok {
+			if val, ok := params.Limit.Get(); ok {
 				return e.EncodeValue(conv.IntToString(val))
 			}
 			return nil
