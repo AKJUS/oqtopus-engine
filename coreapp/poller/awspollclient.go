@@ -52,7 +52,13 @@ func (p pollerSecuritySource) ApiKeyAuth(ctx context.Context, name api.Operation
 
 func newAWSPollClient(p *awsPollClientParams) (*awsPollClient, error) {
 	pss := pollerSecuritySource{apiKey: p.apiKey}
-	cli, err := api.NewClient(p.endPoint, pss)
+
+	// Create a new http.Client with the dumpRoundTripper
+	dumpClient := &http.Client{
+		Transport: newDumpRoundTripper(http.DefaultTransport),
+	}
+
+	cli, err := api.NewClient(p.endPoint, pss, api.WithClient(dumpClient))
 	if err != nil {
 		zap.L().Error(fmt.Sprintf("failed to create a client/reason:%s", err))
 		return nil, err
@@ -78,7 +84,6 @@ func (c *awsPollClient) request() ([]core.Job, error) {
 	if err != nil {
 		msg := fmt.Sprintf("failed to get jobs/reason:%s", err)
 		return []core.Job{}, fmt.Errorf(msg)
-
 	}
 	jobs := []core.Job{}
 	err = nil
