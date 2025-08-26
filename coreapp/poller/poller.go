@@ -3,6 +3,7 @@ package poller
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -95,8 +96,8 @@ func (p *Poller) SetParams(params interface{}) error {
 	zap.L().Debug(fmt.Sprintf("Set params for poller: %v", pp))
 	setField[string]("device", &p.Device, pp, DEFAULT_DEVICE)
 	setField[string]("edge", &p.Edge, pp, DEFAULT_EDGE)
-	setField[int]("count", &p.Count, pp, DEFAULT_COUNT)
-	setField[int]("max_retry", &p.MaxRetry, pp, DEFAULT_MAX_RETRY)
+	setIntField("count", &p.Count, pp, DEFAULT_COUNT)
+	setIntField("max_retry", &p.MaxRetry, pp, DEFAULT_MAX_RETRY)
 	setField[string]("region", &p.Region, pp, DEFAULT_REGION)
 	setField[string]("endpoint", &p.Endpoint, pp, DEFAULT_ENDPOINT)
 	setField[string]("access_key", &p.AccessKey, pp, DEFAULT_ACCESS_KEY)
@@ -111,9 +112,38 @@ func (p *Poller) SetParams(params interface{}) error {
 	return nil
 }
 
-func setField[T string | int | bool](key string, target *T, pp map[string]interface{}, defaultVal T) {
+func setField[T string | bool](key string, target *T, pp map[string]interface{}, defaultVal T) {
 	if v, ok := pp[key]; ok && !reflect.ValueOf(v).IsZero() {
 		*target = v.(T)
+		return
+	}
+	zap.L().Debug(fmt.Sprintf("Set default value for %s: %v", key, defaultVal))
+	*target = defaultVal
+	zap.L().Debug(fmt.Sprintf("Set default value for %s: %v", key, target))
+}
+
+func setIntField(key string, target *int, pp map[string]interface{}, defaultVal int) {
+	if v, ok := pp[key]; ok && !reflect.ValueOf(v).IsZero() {
+		var val int
+		var err error
+		switch i := v.(type) {
+		case int:
+			val = i
+		case int64:
+			val = int(i)
+		case float64:
+			val = int(i)
+		case string:
+			val, err = strconv.Atoi(i)
+			if err != nil {
+				zap.L().Error(fmt.Sprintf("failed to parse int for %s/reason:%s", key, err))
+				val = defaultVal
+			}
+		default:
+			zap.L().Error(fmt.Sprintf("unsupported type for %s: %T", key, v))
+			val = defaultVal
+		}
+		*target = val
 		return
 	}
 	zap.L().Debug(fmt.Sprintf("Set default value for %s: %v", key, defaultVal))
