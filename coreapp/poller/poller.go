@@ -3,7 +3,6 @@ package poller
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -52,10 +51,8 @@ func (s state) String() string {
 type Poller struct {
 	Device       string        `toml:"device"`
 	Edge         string        `toml:"edge"`
-	Count        int           `toml:"count"`
 	NormalPeriod time.Duration `toml:"normal_period"`
 	IdlePeriod   time.Duration `toml:"idle_period"`
-	MaxRetry     int           `toml:"max_retry"`
 
 	Region       string `toml:"region"`
 	Endpoint     string `toml:"endpoint"`
@@ -96,8 +93,6 @@ func (p *Poller) SetParams(params interface{}) error {
 	zap.L().Debug(fmt.Sprintf("Set params for poller: %v", pp))
 	setField[string]("device", &p.Device, pp, DEFAULT_DEVICE)
 	setField[string]("edge", &p.Edge, pp, DEFAULT_EDGE)
-	setIntField("count", &p.Count, pp, DEFAULT_COUNT)
-	setIntField("max_retry", &p.MaxRetry, pp, DEFAULT_MAX_RETRY)
 	setField[string]("region", &p.Region, pp, DEFAULT_REGION)
 	setField[string]("endpoint", &p.Endpoint, pp, DEFAULT_ENDPOINT)
 	setField[string]("access_key", &p.AccessKey, pp, DEFAULT_ACCESS_KEY)
@@ -115,35 +110,6 @@ func (p *Poller) SetParams(params interface{}) error {
 func setField[T string | bool](key string, target *T, pp map[string]interface{}, defaultVal T) {
 	if v, ok := pp[key]; ok && !reflect.ValueOf(v).IsZero() {
 		*target = v.(T)
-		return
-	}
-	zap.L().Debug(fmt.Sprintf("Set default value for %s: %v", key, defaultVal))
-	*target = defaultVal
-	zap.L().Debug(fmt.Sprintf("Set default value for %s: %v", key, target))
-}
-
-func setIntField(key string, target *int, pp map[string]interface{}, defaultVal int) {
-	if v, ok := pp[key]; ok && !reflect.ValueOf(v).IsZero() {
-		var val int
-		var err error
-		switch i := v.(type) {
-		case int:
-			val = i
-		case int64:
-			val = int(i)
-		case float64:
-			val = int(i)
-		case string:
-			val, err = strconv.Atoi(i)
-			if err != nil {
-				zap.L().Error(fmt.Sprintf("failed to parse int for %s/reason:%s", key, err))
-				val = defaultVal
-			}
-		default:
-			zap.L().Error(fmt.Sprintf("unsupported type for %s: %T", key, v))
-			val = defaultVal
-		}
-		*target = val
 		return
 	}
 	zap.L().Debug(fmt.Sprintf("Set default value for %s: %v", key, defaultVal))
@@ -189,7 +155,7 @@ func (p *Poller) Setup() error {
 		&awsPollClientParams{
 			cred:       cred,
 			region:     p.Region,
-			count:      p.Count,
+			count:      DEFAULT_COUNT,
 			endPoint:   p.Endpoint,
 			edgeName:   p.Edge,
 			deviceName: p.Device,
@@ -227,7 +193,7 @@ func (p *Poller) Task() {
 			return
 		case SUB_IDLE:
 			p.noJobsCount++
-			if p.noJobsCount < p.MaxRetry {
+			if p.noJobsCount < DEFAULT_MAX_RETRY {
 				zap.L().Debug(fmt.Sprintf("Retry after %s", p.NormalPeriod))
 			} else {
 				zap.L().Info("Reached max retry. Transition to idle mode")
