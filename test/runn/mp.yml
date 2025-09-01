@@ -8,7 +8,7 @@ steps:
   post:
     desc: post mp job
     req:
-      /v1/jobs:
+      /jobs:
         post:
           headers:
             q-api-token: "{{ vars.token }}"
@@ -24,7 +24,7 @@ steps:
                name: MP
                shots: 1000
                status: submitted
-    test: | 
+    test: |
       current.res.status == 200
     dump:
       expr: current.res.body.job_id + "(mp job) is posted"
@@ -36,7 +36,7 @@ steps:
       minInterval: 5
       maxInterval: 10
     req:
-      /v1/jobs/{{steps.post.res.body.job_id}}:
+      /jobs/{{steps.post.res.body.job_id}}:
         get:
           headers:
             q-api-token: "{{ vars.token }}"
@@ -55,3 +55,6 @@ steps:
       && len(steps.wait.res.body.job_info.result.sampling.divided_counts) == 2
       && len(steps.wait.res.body.job_info.result.sampling.divided_counts["0"]) > 0
       && len(steps.wait.res.body.job_info.result.sampling.divided_counts["1"]) > 0
+  results:
+    dump:
+      expr: 'steps.post.res.body.job_id + " is " + steps.wait.res.body.status + " at " + now().Format("2006-01-02 15:04:05")'

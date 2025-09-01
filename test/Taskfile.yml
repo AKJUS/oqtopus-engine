@@ -16,3 +16,11 @@ tasks:
     desc: "runn all tests concurrently"
     cmds:
       - runn run runn/*.yml --env-file .env --concurrent 8
+  runn-all-rec:
+    desc: "runn all tests and record results"
+    vars:
+      RESULTS_DIR: "results"
+      LOG_FILE: '{{.RESULTS_DIR}}/{{now.Format "2006_0102_1504_05"}}.log'
+    cmds:
+      - mkdir -p {{.RESULTS_DIR}}
+      - runn run runn/*.yml --env-file .env --verbose | tee -a {{.LOG_FILE}}

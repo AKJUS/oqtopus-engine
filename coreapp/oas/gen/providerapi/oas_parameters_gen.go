@@ -88,7 +88,7 @@ type GetJobsParams struct {
 	// Additional search parameter:<br/> Search jobs with specified status only.
 	Status OptJobsJobStatus
 	// Additional search parameter:<br/> Set max number of quantum jobs to return in single request.
-	MaxResults OptInt
+	Limit OptInt
 	// Additional search parameter:<br/> Jobs created after the specified timetsamp.
 	Timestamp OptString
 }
@@ -112,11 +112,11 @@ func unpackGetJobsParams(packed middleware.Parameters) (params GetJobsParams) {
 	}
 	{
 		key := middleware.ParameterKey{
-			Name: "max_results",
+			Name: "limit",
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.MaxResults = v.(OptInt)
+			params.Limit = v.(OptInt)
 		}
 	}
 	{
@@ -225,17 +225,17 @@ func decodeGetJobsParams(args [0]string, argsEscaped bool, r *http.Request) (par
 			Err:  err,
 		}
 	}
-	// Decode query: max_results.
+	// Decode query: limit.
 	if err := func() error {
 		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "max_results",
+			Name:    "limit",
 			Style:   uri.QueryStyleForm,
 			Explode: true,
 		}
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotMaxResultsVal int
+				var paramsDotLimitVal int
 				if err := func() error {
 					val, err := d.DecodeValue()
 					if err != nil {
@@ -247,12 +247,12 @@ func decodeGetJobsParams(args [0]string, argsEscaped bool, r *http.Request) (par
 						return err
 					}
 
-					paramsDotMaxResultsVal = c
+					paramsDotLimitVal = c
 					return nil
 				}(); err != nil {
 					return err
 				}
-				params.MaxResults.SetTo(paramsDotMaxResultsVal)
+				params.Limit.SetTo(paramsDotLimitVal)
 				return nil
 			}); err != nil {
 				return err
@@ -261,7 +261,7 @@ func decodeGetJobsParams(args [0]string, argsEscaped bool, r *http.Request) (par
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "max_results",
+			Name: "limit",
 			In:   "query",
 			Err:  err,
 		}

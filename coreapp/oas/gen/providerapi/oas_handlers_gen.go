@@ -359,9 +359,9 @@ func (s *Server) handleGetJobsRequest(args [0]string, argsEscaped bool, w http.R
 					In:   "query",
 				}: params.Status,
 				{
-					Name: "max_results",
+					Name: "limit",
 					In:   "query",
-				}: params.MaxResults,
+				}: params.Limit,
 				{
 					Name: "timestamp",
 					In:   "query",
