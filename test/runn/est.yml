@@ -8,7 +8,7 @@ steps:
   post:
     desc: post estimation job
     req:
-      /v1/jobs:
+      /jobs:
         post:
           headers:
             q-api-token: "{{ vars.token }}"
@@ -40,7 +40,7 @@ steps:
       test: |
         current.res.body.status == "succeeded"
     req:
-      /v1/jobs/{{steps.post.res.body.job_id}}:
+      /jobs/{{steps.post.res.body.job_id}}:
         get:
           headers:
             q-api-token: "{{ vars.token }}"
@@ -49,3 +49,6 @@ steps:
   check:
     test: |
       steps.wait.res.body.status == "succeeded"
+  results:
+    dump:
+      expr: 'steps.post.res.body.job_id + " is " + steps.wait.res.body.status + " at " + now().Format("2006-01-02 15:04:05")'

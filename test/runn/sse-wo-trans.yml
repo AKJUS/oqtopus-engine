@@ -8,7 +8,7 @@ steps:
   post:
     desc: post SSE job without transpiler
     req:
-      /v1/jobs:
+      /jobs:
         post:
           headers:
             q-api-token: "{{ vars.token }}"
@@ -35,7 +35,7 @@ steps:
       minInterval: 5
       maxInterval: 20
     req:
-      /v1/jobs/{{steps.post.res.body.job_id}}:
+      /jobs/{{steps.post.res.body.job_id}}:
         get:
           headers:
             q-api-token: "{{ vars.token }}"
@@ -56,3 +56,6 @@ steps:
   check-execution-time:
     test: |
       steps.wait.res.body.execution_time > 0
+  results:
+    dump:
+      expr: 'steps.post.res.body.job_id + " is " + steps.wait.res.body.status + " at " + now().Format("2006-01-02 15:04:05")'

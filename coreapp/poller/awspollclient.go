@@ -67,12 +67,12 @@ func newAWSPollClient(p *awsPollClientParams) (*awsPollClient, error) {
 }
 
 func (c *awsPollClient) request() ([]core.Job, error) {
-	zap.L().Debug(fmt.Sprintf("requesting get jobs to %s. EdgeName: %s, DeviceName: %s",
-		c.endpoint, c.edgeName, c.deviceName))
+	zap.L().Debug(fmt.Sprintf("requesting get jobs to %s. EdgeName: %s, DeviceName: %s, Limit: %d",
+		c.endpoint, c.edgeName, c.deviceName, c.count))
 	params := api.GetJobsParams{
-		DeviceID:   c.deviceName,
-		MaxResults: api.NewOptInt(c.count),
-		Status:     api.NewOptJobsJobStatus(api.JobsJobStatusSubmitted),
+		DeviceID: c.deviceName,
+		Limit:    api.NewOptInt(c.count),
+		Status:   api.NewOptJobsJobStatus(api.JobsJobStatusSubmitted),
 	}
 	res0, err := c.client.GetJobs(context.TODO(), params)
 	if err != nil {

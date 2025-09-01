@@ -54,10 +54,8 @@ func TestPoll(t *testing.T) {
 		s := core.SCWithDBContainer()
 		defer s.TearDown()
 		p := &Poller{
-			Count:        1,
 			NormalPeriod: 1,
 			IdlePeriod:   1,
-			MaxRetry:     3,
 		}
 		err := p.Setup()
 		assert.Nil(t, err)

@@ -1,6 +1,6 @@
 version: '3'
 vars:
-  COMMIT: "develop"
+  COMMIT: "develop" # TODO: Update to a specific commit or tag when stable
 tasks:
   update:
     desc: "Update cloud oas files"
@@ -16,7 +16,7 @@ tasks:
   clone:
     desc: "Clone cloud oas files"
     cmds:
-      - git clone --no-checkout https://github.com/oqtopus-team/oqtopus-cloud 
+      - git clone --no-checkout https://github.com/oqtopus-team/oqtopus-cloud
   checkout:
     desc: "Checkout cloud oas files"
     dir: oqtopus-cloud
@@ -29,8 +29,6 @@ tasks:
   gen:
     desc: "Generate cloudmockapi and providerapi"
     cmds:
-      - rm -rf gen/cloudmockapi/*
-      - ogen -package cloudmockapi -config config.yml -target gen/cloudmockapi ./cloudmock_api.yml
       - rm -rf gen/providerapi/*
       - ogen -package providerapi -config config.yml -target gen/providerapi ./provider/openapi.yaml
       - mockgen -source gen/providerapi/oas_client_gen.go -destination gen/mock_providerapi/oas_client_gen_mock.go
